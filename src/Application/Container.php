@@ -8,8 +8,13 @@ use SonicFoundry\Auth\Auth;
 use SonicFoundry\Database\Connection;
 use SonicFoundry\User\UserRepository;
 
+use Google\Client as GoogleClient;
+use SonicFoundry\Auth\GoogleAuthenticator;
+
 final class Container
 {
+    private ?GoogleAuthenticator $googleAuthenticator = null;
+
     private ?PDO $database = null;
 
     private ?UserRepository $userRepository = null;
@@ -45,5 +50,28 @@ final class Container
         }
 
         return $this->auth;
+    }
+
+    public function googleAuthenticator(): GoogleAuthenticator
+    {
+        if (!$this->googleAuthenticator instanceof GoogleAuthenticator) {
+            $clientId = env('GOOGLE_CLIENT_ID');
+
+            if (!$clientId) {
+                throw new \RuntimeException(
+                    'GOOGLE_CLIENT_ID is not configured.'
+                );
+            }
+
+            $googleClient = new GoogleClient([
+                'client_id' => $clientId,
+            ]);
+
+            $this->googleAuthenticator = new GoogleAuthenticator(
+                $googleClient
+            );
+        }
+
+        return $this->googleAuthenticator;
     }
 }
