@@ -53,3 +53,7 @@ function env(string $key, ?string $default = null): ?string
 
     return (string) $value;
 }
+
+use SonicFoundry\Auth\Session;
+
+Session::start();
