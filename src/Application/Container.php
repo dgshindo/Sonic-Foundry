@@ -7,12 +7,20 @@ use PDO;
 use SonicFoundry\Auth\Auth;
 use SonicFoundry\Database\Connection;
 use SonicFoundry\User\UserRepository;
-
 use Google\Client as GoogleClient;
 use SonicFoundry\Auth\GoogleAuthenticator;
+use SonicFoundry\Auth\GoogleLoginService;
+use SonicFoundry\Auth\PasswordLoginService;
+use SonicFoundry\Auth\RegistrationService;
 
 final class Container
 {
+    private ?RegistrationService $registrationService = null;
+    
+    private ?PasswordLoginService $passwordLoginService = null;
+
+    private ?GoogleLoginService $googleLoginService = null;
+
     private ?GoogleAuthenticator $googleAuthenticator = null;
 
     private ?PDO $database = null;
@@ -73,5 +81,52 @@ final class Container
         }
 
         return $this->googleAuthenticator;
+    }
+
+    public function googleLogin(): GoogleLoginService
+    {
+        if (!$this->googleLoginService instanceof GoogleLoginService) {
+            $this->googleLoginService = new GoogleLoginService(
+                googleAuthenticator: $this->googleAuthenticator(),
+                users: $this->users(),
+                auth: $this->auth(),
+            );
+        }
+
+        return $this->googleLoginService;
+    }
+
+   
+
+    public function registration(): RegistrationService
+    {
+        if (
+            !$this->registrationService
+            instanceof RegistrationService
+        ) {
+            $this->registrationService =
+                new RegistrationService(
+                    users: $this->users(),
+                    auth: $this->auth(),
+                );
+        }
+
+        return $this->registrationService;
+    }
+
+    public function passwordLogin(): PasswordLoginService
+    {
+        if (
+            !$this->passwordLoginService
+            instanceof PasswordLoginService
+        ) {
+            $this->passwordLoginService =
+                new PasswordLoginService(
+                    users: $this->users(),
+                    auth: $this->auth(),
+                );
+        }
+
+        return $this->passwordLoginService;
     }
 }

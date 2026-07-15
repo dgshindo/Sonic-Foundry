@@ -50,6 +50,8 @@ final class AuthenticatedUser
         return $this->user->displayName();
     }
 
+    
+
     public function avatarUrl(): ?string
     {
         return $this->user->avatarUrl();
@@ -67,6 +69,6 @@ final class AuthenticatedUser
 
     public function authenticatedWithGoogle(): bool
     {
-        return $this->authenticationMethod === 'google';
+        return $this->authenticationMethod === 'Google';
     }
 }

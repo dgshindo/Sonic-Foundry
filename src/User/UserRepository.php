@@ -224,4 +224,132 @@ final class UserRepository
             (string) $value
         );
     }
+
+    public function updateGoogleProfile(
+        User $user,
+        string $email,
+        string $displayName,
+        ?string $avatarUrl,
+        bool $emailVerified,
+    ): User {
+        $normalizedEmail = mb_strtolower(trim($email));
+        $normalizedName = trim($displayName);
+
+        if (!filter_var($normalizedEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException(
+                'A valid email address is required.'
+            );
+        }
+
+        if ($normalizedName === '') {
+            throw new \InvalidArgumentException(
+                'Display name cannot be empty.'
+            );
+        }
+
+        $statement = $this->pdo->prepare(
+            '
+            UPDATE users
+            SET
+                email = :email,
+                display_name = :display_name,
+                avatar_url = :avatar_url,
+                email_verified_at = CASE
+                    WHEN :email_verified = 1
+                        THEN COALESCE(
+                            email_verified_at,
+                            CURRENT_TIMESTAMP
+                        )
+                    ELSE email_verified_at
+                END
+            WHERE id = :id
+            '
+        );
+
+        $statement->execute([
+            'email' => $normalizedEmail,
+            'display_name' => $normalizedName,
+            'avatar_url' => $avatarUrl,
+            'email_verified' => $emailVerified ? 1 : 0,
+            'id' => $user->id(),
+        ]);
+
+        $updatedUser = $this->findById($user->id());
+
+        if (!$updatedUser) {
+            throw new \RuntimeException(
+                'The updated user could not be reloaded.'
+            );
+        }
+
+        return $updatedUser;
+    }
+
+    public function createPasswordUser(
+        string $email,
+        string $displayName,
+        string $passwordHash,
+    ): User {
+        $normalizedEmail = mb_strtolower(trim($email));
+        $normalizedName = trim($displayName);
+
+        if (!filter_var($normalizedEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException(
+                'A valid email address is required.'
+            );
+        }
+
+        if ($normalizedName === '') {
+            throw new \InvalidArgumentException(
+                'Display name cannot be empty.'
+            );
+        }
+
+        if ($this->findByEmail($normalizedEmail)) {
+            throw new \DomainException(
+                'An account already exists for this email address.'
+            );
+        }
+
+        $statement = $this->pdo->prepare(
+            '
+            INSERT INTO users (
+                google_sub,
+                email,
+                display_name,
+                avatar_url,
+                password_hash,
+                email_verified_at,
+                account_status
+            ) VALUES (
+                NULL,
+                :email,
+                :display_name,
+                NULL,
+                :password_hash,
+                NULL,
+                :account_status
+            )
+            '
+        );
+
+        $statement->execute([
+            'email' => $normalizedEmail,
+            'display_name' => $normalizedName,
+            'password_hash' => $passwordHash,
+            'account_status' => 'active',
+        ]);
+
+        $user = $this->findById(
+            (int) $this->pdo->lastInsertId()
+        );
+
+        if (!$user) {
+            throw new \RuntimeException(
+                'The account was created but could not be reloaded.'
+            );
+        }
+
+        return $user;
+    }
 }

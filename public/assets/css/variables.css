@@ -157,4 +157,15 @@
     --z-raised: 10;
     --z-navigation: 100;
     --z-modal: 1000;
+
+    --logo-sm: 48px;
+    --logo-md: 64px;
+    --logo-lg: 96px;
+    --logo-xl: 140px;
+
+    --avatar-sm: 48px;
+    --avatar-md: 64px;
+    --avatar-lg: 96px;
+    --avatar-xl: 140px;
 }
+

@@ -28,42 +28,43 @@ $authenticatedUser = $auth->requireAuthentication();
 <body>
     <main class="app-shell">
         <section class="welcome-panel">
-            <?php if ($authenticatedUser->avatarUrl()): ?>
-                <img
-                    src="<?= htmlspecialchars(
-                        $authenticatedUser->avatarUrl(),
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>"
-                    alt=""
-                    width="96"
-                    height="96"
-                    style="
-                        margin: 0 auto 1.5rem;
-                        border-radius: 50%;
-                    "
-                >
-            <?php endif; ?>
+            <div class="workspace-header">
+                <a href="/" class="workspace-logo-link" aria-label="Sonic Foundry Home">
+                    <img
+                        class="workspace-logo"
+                        src="/assets/images/sonic-foundry-logo.png"
+                        alt="Sonic Foundry anvil and soundwave emblem"
+                    >
+                </a>
+                <?php if ($authenticatedUser->avatarUrl()): ?>
+                                <img
+                                    class="workspace-avatar"
+                                    src="<?= htmlspecialchars($authenticatedUser->avatarUrl()) ?>"
+                                    alt="<?= htmlspecialchars($authenticatedUser->displayName()) ?> profile picture"
+                                    referrerpolicy="no-referrer"
+                                >
+                <?php else: ?>
+                    <div class="user-avatar user-avatar--fallback" aria-hidden="true" >
+                        <?= htmlspecialchars(mb_strtoupper(mb_substr($authenticatedUser->displayName(0,1)))) ?>
+                    </div>
+                <?php endif; ?>
+                <div class="workspace-title-group">
+                        <div class="eyebrow">
+                            Workspace
+                        </div>
 
-            <p class="eyebrow">
-                Workspace
-            </p>
+                        <div class="display-title display-title--small">
+                            
+                            Welcome, <?= htmlspecialchars(explode(' ', trim($authenticatedUser->displayName()))[0]) ?>
+                        </div>
 
-            <h1>
-                Welcome,
-                <?= htmlspecialchars(
-                    $authenticatedUser->displayName(),
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
-            </h1>
-
-            <p class="tagline">
-                Continue forging your next legacy.
-            </p>
-
+                        <div class="tagline">
+                            Continue forging your next legacy.
+                        </p>
+                    </div>
+                    </div>
             <p>
-                Signed in through
+                Signed in with
                 <strong>
                     <?= htmlspecialchars(
                         $authenticatedUser->authenticationMethod(),

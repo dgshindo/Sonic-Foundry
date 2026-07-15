@@ -13,16 +13,11 @@ h6 {
 }
 
 h1 {
-    margin-bottom: var(--space-5);
-    font-size: clamp(
-        2.65rem,
-        7vw,
-        var(--font-size-4xl)
-    );
-    line-height: var(--line-height-tight);
-    text-shadow:
-        0 2px 0 #302d28,
-        0 12px 42px rgba(0, 0, 0, 0.72);
+    margin: 0 0 var(--space-5);
+    color: var(--color-silver);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-2xl);
+    line-height: var(--line-height-heading);
 }
 
 h2 {
@@ -52,6 +47,48 @@ h5,
 h6 {
     margin-bottom: var(--space-2);
     font-size: var(--font-size-md);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Display Titles
+|--------------------------------------------------------------------------
+*/
+
+.display-title {
+    margin: 0;
+    color: var(--color-silver);
+    font-family: var(--font-heading);
+    font-size: clamp(
+        3rem,
+        7vw,
+        6rem
+    );
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: 0.01em;
+    text-align: center;
+    text-wrap: balance;
+    text-shadow:
+        0 2px 0 rgba(48, 45, 40, 0.9),
+        0 14px 40px rgba(0, 0, 0, 0.75);
+}
+
+.display-title--medium {
+    font-size: clamp(
+        2.5rem,
+        5vw,
+        4.5rem
+    );
+}
+
+.display-title--small {
+    font-size: clamp(
+        2rem,
+        4vw,
+        3rem
+    );
 }
 
 p {
@@ -162,3 +199,4 @@ strong {
 small {
     font-size: var(--font-size-sm);
 }
+

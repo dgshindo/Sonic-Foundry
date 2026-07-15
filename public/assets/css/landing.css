@@ -179,55 +179,7 @@ h1 {
     margin-top: 2.5rem;
 }
 
-.button {
-    min-width: 190px;
-    padding: 0.95rem 1.4rem;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    font-weight: 800;
-    letter-spacing: 0.045em;
-    text-decoration: none;
-    text-transform: uppercase;
-    transition:
-        transform 160ms ease,
-        box-shadow 160ms ease,
-        border-color 160ms ease,
-        background 160ms ease;
-}
 
-.button:hover {
-    transform: translateY(-2px);
-}
-
-.button--primary {
-    color: #120a03;
-    background:
-        linear-gradient(
-            180deg,
-            var(--ember-bright),
-            var(--fire)
-        );
-    box-shadow:
-        0 12px 28px rgba(255, 83, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-.button--primary:hover {
-    box-shadow:
-        0 16px 36px rgba(255, 83, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.button--secondary {
-    color: var(--color-silver);
-    background: rgba(255, 255, 255, 0.025);
-    border-color: var(--border);
-}
-
-.button--secondary:hover {
-    border-color: var(--color-gold);
-    background: rgba(215, 174, 99, 0.07);
-}
 
 .framework {
     padding: 5rem 1.5rem;
@@ -380,6 +332,11 @@ h1 {
         line-height: 1.5;
     }
 
+    .auth-title {
+        font-size:
+            clamp(3rem,6vw,5rem);
+    }
+
     .user-avatar {
         display: grid;
         width: 96px;
@@ -448,36 +405,6 @@ h1 {
         line-height: 1.7;
     }
 
-    .auth-form {
-        display: grid;
-        gap: 1.25rem;
-    }
-
-    .form-field {
-        display: grid;
-        gap: 0.5rem;
-    }
-
-    .form-field label {
-        color: var(--silver);
-        font-weight: 700;
-    }
-
-    .form-field input {
-        width: 100%;
-        padding: 0.9rem 1rem;
-        color: var(--color-text);
-        background: #0d0d0d;
-        border: 1px solid #49443d;
-        border-radius: 5px;
-        font: inherit;
-    }
-
-    .form-field input:focus {
-        outline: 2px solid var(--color-ember);
-        outline-offset: 2px;
-        border-color: var(--ember);
-    }
 
     .field-help {
         margin: 0;
@@ -510,19 +437,6 @@ h1 {
         background: var(--color-border);
     }
 
-    .form-alert {
-        margin-bottom: 1.5rem;
-        padding: 0.9rem 1rem;
-        border-radius: 5px;
-        line-height: 1.5;
-    }
-
-    .form-alert--error {
-        color: #ffd1d1;
-        background: rgba(178, 36, 36, 0.18);
-        border: 1px solid rgba(255, 105, 105, 0.45);
-    }
-
     .auth-footer {
         margin-top: 2rem;
         text-align: center;
@@ -535,5 +449,10 @@ h1 {
 
     .auth-footer a:hover {
         color: var(--ember-bright);
+    }
+
+    .hero-logo {
+        width: var(--logo-xl);
+        height: var(--logo-xl);
     }
 }

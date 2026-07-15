@@ -1,0 +1,52 @@
+.google-signin {
+    display: flex;
+    justify-content: center;
+
+    margin: var(--space-8) 0;
+    padding: var(--space-6);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.025),
+            rgba(255,255,255,.01)
+        );
+
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+
+    margin: var(--space-8) 0;
+
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    flex: 1;
+    content: "";
+    height: 1px;
+    background: var(--color-border);
+}
+
+.auth-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: var(--space-10);
+}
+
+.auth-logo {
+    width: var(--logo-md);
+    height: var(--logo-md);
+    margin-bottom: var(--space-6);
+}

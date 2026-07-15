@@ -127,4 +127,9 @@ final class User
     {
         return $this->accountStatus === 'deleted';
     }
+
+    public function firstName(): string
+    {
+        return explode(' ', trim($this->displayName))[0];
+    }
 }

@@ -1,0 +1,138 @@
+/*
+|--------------------------------------------------------------------------
+| Forms
+|--------------------------------------------------------------------------
+*/
+
+.auth-form {
+
+    display:grid;
+
+    gap:
+        var(--space-6);
+
+}
+
+.form-field {
+
+    display:grid;
+
+    gap:
+        .55rem;
+
+}
+
+.form-field label {
+
+    color:
+        var(--color-silver);
+
+    font-weight:
+        600;
+    text-align:
+        left;
+
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+
+    width:100%;
+
+    padding:
+        1rem
+        1rem;
+
+    color:
+        var(--color-text);
+
+    background:
+        rgba(255,255,255,.03);
+
+    border:
+        1px solid
+        var(--color-border);
+
+    border-radius:
+        var(--radius-md);
+
+    transition:
+        border-color
+        var(--transition-fast),
+
+        box-shadow
+        var(--transition-fast);
+
+}
+
+.form-field input:hover {
+
+    border-color:
+        var(--color-border-strong);
+
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+
+    border-color:
+        var(--color-ember);
+
+    box-shadow:
+
+        0 0 0 4px
+
+        rgba(255,121,0,.12);
+
+}
+
+.field-help {
+
+    color:
+        var(--color-text-muted);
+
+    font-size:
+        var(--font-size-sm);
+    text-align:
+        left;
+
+}
+
+.form-alert {
+
+    padding:
+        1rem;
+
+    border-radius:
+        var(--radius-md);
+
+    margin-bottom:
+        var(--space-6);
+
+}
+
+.form-alert--error {
+
+    color:
+        var(--color-danger);
+
+    background:
+        var(--color-danger-background);
+
+    border:
+        1px solid
+        rgba(255,120,120,.25);
+
+}
+
+.form-alert--success {
+
+    color:
+        var(--color-success);
+
+    background:
+        var(--color-success-background);
+
+}

@@ -29,7 +29,9 @@ $appName = 'Sonic Foundry';
                     Creative Album Development Platform
                 </p>
 
-                <h1>Sonic Foundry</h1>
+                <div class="display-title">
+                    Sonic Foundry
+                </div>
 
                 <p class="hero__tagline">
                     Define your sound. Forge your identity.

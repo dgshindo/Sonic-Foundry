@@ -17,7 +17,7 @@ final class Auth
 
     public function __construct(
         private UserRepository $users,
-    ) {
+        ) {
     }
 
     public function login(

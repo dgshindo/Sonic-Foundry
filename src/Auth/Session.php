@@ -7,6 +7,8 @@ final class Session
 {
     private const FLASH_KEY = '_flash';
 
+    private const CSRF_KEY = '_csrf_token';
+
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -114,5 +116,40 @@ final class Session
             'old' => $flash['new'] ?? [],
             'new' => [],
         ];
+    }
+
+    public static function csrfToken(): string
+    {
+        self::start();
+
+        $token = $_SESSION[self::CSRF_KEY] ?? null;
+
+        if (!is_string($token) || $token === '') {
+            $token = bin2hex(random_bytes(32));
+            $_SESSION[self::CSRF_KEY] = $token;
+        }
+
+        return $token;
+    }
+
+    public static function verifyCsrfToken(
+        ?string $submittedToken
+    ): bool {
+        self::start();
+
+        $storedToken = $_SESSION[self::CSRF_KEY] ?? null;
+
+        if (
+            !is_string($storedToken)
+            || !is_string($submittedToken)
+            || $submittedToken === ''
+        ) {
+            return false;
+        }
+
+        return hash_equals(
+            $storedToken,
+            $submittedToken
+        );
     }
 }
