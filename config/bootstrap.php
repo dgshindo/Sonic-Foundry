@@ -1,9 +1,14 @@
 <?php
 declare(strict_types=1);
 
-use SonicFoundry\Database\Connection;
+use SonicFoundry\Auth\Session;
+use SonicFoundry\Application\Container;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
+
+/*
+ * Load .env
+ */
 
 $envPath = dirname(__DIR__) . '/.env';
 
@@ -11,7 +16,10 @@ if (!is_file($envPath)) {
     throw new RuntimeException('.env file not found.');
 }
 
-$lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$lines = file(
+    $envPath,
+    FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+);
 
 foreach ($lines as $line) {
     $line = trim($line);
@@ -43,6 +51,10 @@ foreach ($lines as $line) {
     putenv($name . '=' . $value);
 }
 
+/*
+ * Environment helper
+ */
+
 function env(string $key, ?string $default = null): ?string
 {
     $value = $_ENV[$key] ?? getenv($key);
@@ -54,6 +66,18 @@ function env(string $key, ?string $default = null): ?string
     return (string) $value;
 }
 
-use SonicFoundry\Auth\Session;
+/*
+ * Application composition
+ */
 
 Session::start();
+
+$container = new Container();
+
+$auth = $container->auth();
+$userRepository = $container->users();
+
+return [
+    'auth' => $auth,
+    'userRepository' => $userRepository,
+];

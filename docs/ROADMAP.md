@@ -500,7 +500,7 @@ The following should not delay the core workflow:
 
 # Current Status
 
-Completed
+**Completed**
 Version 0.1 foundation work has begun
 - Repository created
 - Public landing page created

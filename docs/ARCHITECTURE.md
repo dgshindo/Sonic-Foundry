@@ -391,3 +391,27 @@ TrackRepository
 
 ConversationRepository
     owns Conversations
+
+## Direction of Dependencies
+
+Presentation
+
+↓
+
+Application
+
+↓
+
+Domain
+
+↓
+
+Repositories
+
+↓
+
+Database
+
+Dependencies only point downward.
+
+Lower layers never know about higher layers.    
