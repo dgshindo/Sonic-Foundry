@@ -1,0 +1,159 @@
+:root {
+    color-scheme: dark;
+
+    /*
+     * Core Foundry palette
+     */
+
+    --color-black: #050505;
+    --color-background: #080808;
+    --color-background-soft: #0d0d0d;
+
+    --color-panel: #151413;
+    --color-panel-raised: #1d1b19;
+    --color-panel-hover: #25211d;
+
+    --color-steel-dark: #292724;
+    --color-steel: #5b5650;
+    --color-silver: #d8d0c3;
+
+    --color-ember-dark: #b83b00;
+    --color-fire: #f45100;
+    --color-ember: #ff7900;
+    --color-ember-bright: #ff9d32;
+    --color-gold: #d5aa5d;
+    --color-gold-muted: #9f7d45;
+
+    --color-text: #f2eee7;
+    --color-text-soft: #d4cdc3;
+    --color-text-muted: #aaa197;
+    --color-text-subtle: #756e67;
+
+    --color-border: rgba(213, 170, 93, 0.24);
+    --color-border-strong: rgba(213, 170, 93, 0.48);
+    --color-border-muted: rgba(255, 255, 255, 0.09);
+
+    --color-success: #83c991;
+    --color-success-background: rgba(60, 139, 76, 0.18);
+
+    --color-warning: #e8b85e;
+    --color-warning-background: rgba(184, 124, 32, 0.18);
+
+    --color-danger: #ff9d9d;
+    --color-danger-background: rgba(180, 42, 42, 0.2);
+
+    /*
+     * Typography
+     */
+
+    --font-heading:
+        Georgia,
+        "Times New Roman",
+        serif;
+
+    --font-body:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    --font-monospace:
+        "Cascadia Code",
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-md: 1.125rem;
+    --font-size-lg: 1.35rem;
+    --font-size-xl: 1.75rem;
+    --font-size-2xl: 2.4rem;
+    --font-size-3xl: 3.5rem;
+    --font-size-4xl: 5.5rem;
+
+    --line-height-tight: 1.05;
+    --line-height-heading: 1.15;
+    --line-height-body: 1.65;
+    --line-height-loose: 1.8;
+
+    /*
+     * Spacing
+     */
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
+    --space-24: 6rem;
+
+    /*
+     * Widths
+     */
+
+    --container-sm: 42rem;
+    --container-md: 64rem;
+    --container-lg: 82rem;
+    --container-xl: 96rem;
+
+    /*
+     * Borders and radius
+     */
+
+    --radius-xs: 3px;
+    --radius-sm: 5px;
+    --radius-md: 9px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-round: 999px;
+
+    /*
+     * Shadows and glow
+     */
+
+    --shadow-small:
+        0 8px 24px rgba(0, 0, 0, 0.28);
+
+    --shadow-medium:
+        0 18px 48px rgba(0, 0, 0, 0.42);
+
+    --shadow-heavy:
+        0 30px 90px rgba(0, 0, 0, 0.68);
+
+    --shadow-ember:
+        0 12px 32px rgba(244, 81, 0, 0.27);
+
+    --glow-ember:
+        0 0 42px rgba(255, 121, 0, 0.22);
+
+    --glow-gold:
+        0 0 30px rgba(213, 170, 93, 0.18);
+
+    /*
+     * Motion
+     */
+
+    --transition-fast: 120ms ease;
+    --transition-normal: 180ms ease;
+    --transition-slow: 280ms ease;
+
+    /*
+     * Layering
+     */
+
+    --z-base: 1;
+    --z-raised: 10;
+    --z-navigation: 100;
+    --z-modal: 1000;
+}
