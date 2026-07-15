@@ -1,0 +1,17 @@
+@'
+.env
+/vendor/
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.idea/
+.vscode/
+
+*.log
+*.tmp
+*.bak
+'@ | Set-Content .gitignore -Encoding utf8

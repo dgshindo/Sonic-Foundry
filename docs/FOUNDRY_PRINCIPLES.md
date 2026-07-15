@@ -1,4 +1,3 @@
-﻿# Sonic Foundry
 # Sonic Foundry Principles
 
 *"Tools can make noise. Intent creates impact."*

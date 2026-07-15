@@ -1,0 +1,13 @@
+{
+  "name": "dgshindo/sonic-foundry",
+  "description": "Sonic Foundry creative album development platform",
+  "type": "project",
+  "autoload": {
+    "psr-4": {
+      "SonicFoundry\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^8.1"
+  }
+}
