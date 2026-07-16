@@ -12,6 +12,8 @@ use SonicFoundry\Auth\GoogleAuthenticator;
 use SonicFoundry\Auth\GoogleLoginService;
 use SonicFoundry\Auth\PasswordLoginService;
 use SonicFoundry\Auth\RegistrationService;
+use SonicFoundry\Work\WorkRepository;
+use SonicFoundry\Work\WorkService;
 
 final class Container
 {
@@ -28,6 +30,10 @@ final class Container
     private ?UserRepository $userRepository = null;
 
     private ?Auth $auth = null;
+
+    private ?WorkRepository $workRepository = null;
+
+    private ?WorkService $workService = null;
 
     public function database(): PDO
     {
@@ -129,4 +135,27 @@ final class Container
 
         return $this->passwordLoginService;
     }
+
+    public function works(): WorkRepository
+    {
+        if (!$this->workRepository instanceof WorkRepository) {
+            $this->workRepository = new WorkRepository(
+                $this->database()
+            );
+        }
+
+        return $this->workRepository;
+    }
+
+    public function workService(): WorkService
+    {
+        if (!$this->workService instanceof WorkService) {
+            $this->workService = new WorkService(
+                $this->works()
+            );
+        }
+
+        return $this->workService;
+    }
+
 }

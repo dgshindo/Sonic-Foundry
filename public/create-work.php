@@ -247,7 +247,7 @@ $oldTitle = Session::getFlash(
                     >
 
                     <fieldset class="work-type-fieldset">
-                        <legend class="sr-only">
+                        <legend class="sr-only" style="margin-bottom: 5px;">
                             Select the type of musical work
                         </legend>
 
