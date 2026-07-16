@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+require_once dirname(__DIR__) . '/config/bootstrap.php';
+
+$authenticatedUser = $auth->user();
+$isAuthenticated = $authenticatedUser !== null;
+
 $appName = 'Sonic Foundry';
 ?>
 <!doctype html>
@@ -43,14 +48,36 @@ $appName = 'Sonic Foundry';
                 </p>
 
                 <div class="hero__actions">
-                    <a class="button button--primary" href="#">
-                        Begin New Project
-                    </a>
+    <?php if ($isAuthenticated): ?>
+        <a
+            class="button button--primary"
+            href="/new-project.php"
+        >
+            Begin New Project
+        </a>
 
-                    <a class="button button--secondary" href="#">
-                        Continue Project
-                    </a>
-                </div>
+        <a
+            class="button button--secondary"
+            href="/workspace.php"
+        >
+            Continue Project
+        </a>
+    <?php else: ?>
+        <a
+            class="button button--primary"
+            href="/register.php"
+        >
+            Create Free Account
+        </a>
+
+        <a
+            class="button button--secondary"
+            href="/login.php"
+        >
+            Sign In
+        </a>
+    <?php endif; ?>
+</div>
             </div>
         </section>
 
