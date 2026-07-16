@@ -50,7 +50,10 @@ final class AuthenticatedUser
         return $this->user->displayName();
     }
 
-    
+    public function firstName(): string
+    {
+        return $this->user->firstName();
+    }
 
     public function avatarUrl(): ?string
     {

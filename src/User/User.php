@@ -127,9 +127,19 @@ final class User
     {
         return $this->accountStatus === 'deleted';
     }
-
+    /*
     public function firstName(): string
     {
         return explode(' ', trim($this->displayName))[0];
     }
+    */
+    public function firstName(): string
+        {
+            $parts = preg_split(
+                '/\s+/',
+                trim($this->displayName)
+            );
+
+            return $parts[0] ?? $this->displayName;
+        }
 }

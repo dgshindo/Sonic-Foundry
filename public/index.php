@@ -92,7 +92,7 @@ $appName = 'Sonic Foundry';
 
             <img
                 class="framework__image"
-                src="/assets/images/sonic-foundry-framework.png"
+                src="/assets/images/sonic_foundry_framework.png"
                 alt="The Sonic Foundry five-step framework: Story, Emotion, Identity, Sound, and Legacy"
             >
         </section>
