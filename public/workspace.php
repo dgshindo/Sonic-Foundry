@@ -4,7 +4,12 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 $authenticatedUser = $auth->requireAuthentication();
+
+$works = $container->workService()->listForUser(
+    $authenticatedUser
+);
 ?>
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -203,36 +208,140 @@ $authenticatedUser = $auth->requireAuthentication();
                     </a>
                 </header>
 
-                <section
-                    class="works-empty-state"
-                    aria-labelledby="empty-state-title"
-                >
-                    <img
-                        class="works-empty-state__logo"
-                        src="/assets/images/sonic-foundry-logo.png"
-                        alt=""
+                <?php if ($works === []): ?>
+                    <section
+                        class="works-empty-state"
+                        aria-labelledby="empty-state-title"
                     >
+                        <img
+                            class="works-empty-state__logo"
+                            src="/assets/images/sonic-foundry-logo.png"
+                            alt=""
+                        >
 
-                    <p class="eyebrow">
-                        The Forge Awaits
-                    </p>
+                        <p class="eyebrow">
+                            The Forge Awaits
+                        </p>
 
-                    <h2 id="empty-state-title">
-                        Begin your first work
-                    </h2>
+                        <h2 id="empty-state-title">
+                            Begin your first work
+                        </h2>
 
-                    <p>
-                        A single, an EP, an album, or something entirely
-                        different—every meaningful work begins with intent.
-                    </p>
+                        <p>
+                            A single, an EP, an album, or something entirely
+                            different—every meaningful work begins with intent.
+                        </p>
 
-                    <a
-                        class="button button--primary button--large"
-                        href="/create-work.php"
+                        <a
+                            class="button button--primary button--large"
+                            href="/create-work.php"
+                        >
+                            Create Your First Work
+                        </a>
+                    </section>
+                <?php else: ?>
+                    <section
+                        class="works-grid"
+                        aria-label="Your creative works"
                     >
-                        Create Your First Work
-                    </a>
-                </section>
+                        <?php foreach ($works as $work): ?>
+                            <article class="work-card">
+                                <header class="work-card__header">
+                                    <div>
+                                        <p class="work-card__type">
+                                            <?= htmlspecialchars(
+                                                $work->typeLabel(),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </p>
+
+                                        <h2 class="work-card__title">
+                                            <?= htmlspecialchars(
+                                                $work->title(),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </h2>
+                                    </div>
+
+                                    <span class="work-card__status">
+                                        <?= htmlspecialchars(
+                                            $work->statusLabel(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </span>
+                                </header>
+
+                                <div class="work-card__progress">
+                                    <div class="work-card__pillar">
+                                        <span>Current Pillar</span>
+
+                                        <strong>
+                                            <?= htmlspecialchars(
+                                                $work->currentPillarLabel(),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </strong>
+                                    </div>
+
+                                    <div
+                                        class="work-card__progress-track"
+                                        aria-hidden="true"
+                                    >
+                                        <span
+                                            class="work-card__progress-value"
+                                            style="width: <?= match (
+                                                $work->currentPillar()->value
+                                            ) {
+                                                'story' => '20%',
+                                                'emotion' => '40%',
+                                                'identity' => '60%',
+                                                'sound' => '80%',
+                                                'impact' => '100%',
+                                                default => '0%',
+                                            } ?>"
+                                        ></span>
+                                    </div>
+                                </div>
+
+                                <footer class="work-card__footer">
+                                    <div class="work-card__updated">
+                                        Updated
+                                        <time
+                                            datetime="<?= htmlspecialchars(
+                                                $work->updatedAt()->format(DATE_ATOM),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>"
+                                        >
+                                            <?= htmlspecialchars(
+                                                $work->updatedAt()->format(
+                                                    'M j, Y \a\t g:i A'
+                                                ),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </time>
+                                    </div>
+
+                                    <a
+                                        class="button button--primary"
+                                        href="/forge.php?work=<?= $work->id() ?>&pillar=<?= htmlspecialchars(
+                                            $work->currentPillar()->value,
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+                                        Resume Forging
+                                    </a>
+                                </footer>
+                            </article>
+                        <?php endforeach; ?>
+                    </section>
+                <?php endif; ?>
             </main>
         </div>
     </div>

@@ -3,9 +3,16 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/bootstrap.php';
 
+//use DomainException;
 use SonicFoundry\Auth\Session;
 
 $authenticatedUser = $auth->requireAuthentication();
+
+/*
+|--------------------------------------------------------------------------
+| Load and validate the requested Work
+|--------------------------------------------------------------------------
+*/
 
 $workId = filter_input(
     INPUT_GET,
@@ -29,8 +36,6 @@ try {
         user: $authenticatedUser,
     );
 } catch (DomainException) {
-    http_response_code(404);
-
     Session::flash(
         'work_error',
         'The requested work could not be found.'
@@ -40,12 +45,15 @@ try {
     exit;
 }
 
-$workTitle = $work->title();
-$workType = $work->typeLabel();
-
-$requestedPillar = mb_strtolower(
-    trim((string) ($_GET['pillar'] ?? 'story'))
-);
+/*
+|--------------------------------------------------------------------------
+| Pillar configuration
+|--------------------------------------------------------------------------
+|
+| Story is presently the only unlocked pillar. The same configuration
+| structure will later drive Emotion, Identity, Sound, and Impact.
+|
+*/
 
 $pillarConfigurations = [
     'story' => [
@@ -60,7 +68,11 @@ $pillarConfigurations = [
             'Tell me about the story behind this work. '
             . 'What made you feel that it needed to exist?'
         ),
+        'guide_role' => 'Story Guide',
+        'status' => 'Beginning',
+        'available' => true,
     ],
+
     'emotion' => [
         'number' => '02',
         'name' => 'Emotion',
@@ -72,7 +84,11 @@ $pillarConfigurations = [
             'How should the listener feel when this work begins, '
             . 'and how should that feeling change before it ends?'
         ),
+        'guide_role' => 'Emotion Guide',
+        'status' => 'Locked',
+        'available' => false,
     ],
+
     'identity' => [
         'number' => '03',
         'name' => 'Identity',
@@ -83,38 +99,54 @@ $pillarConfigurations = [
         'opening_prompt' => (
             'What makes this work unmistakably yours?'
         ),
+        'guide_role' => 'Identity Guide',
+        'status' => 'Locked',
+        'available' => false,
     ],
+
     'sound' => [
         'number' => '04',
         'name' => 'Sound',
         'question' => 'How does your world sound?',
         'introduction' => (
-            'Sound transforms your creative identity into an audible world.'
+            'Sound transforms your creative identity into '
+            . 'an audible world.'
         ),
         'opening_prompt' => (
-            'What instruments, textures, rhythms, and production choices '
-            . 'belong in this work?'
+            'What instruments, textures, rhythms, and production '
+            . 'choices belong in this work?'
         ),
+        'guide_role' => 'Sound Guide',
+        'status' => 'Locked',
+        'available' => false,
     ],
+
     'impact' => [
         'number' => '05',
         'name' => 'Impact',
         'question' => 'What should remain?',
         'introduction' => (
-            'Impact is what stays with the listener after the music ends.'
+            'Impact is what stays with the listener '
+            . 'after the music ends.'
         ),
         'opening_prompt' => (
             'When someone finishes this work, '
             . 'what do you hope has changed for them?'
         ),
+        'guide_role' => 'Impact Guide',
+        'status' => 'Locked',
+        'available' => false,
     ],
 ];
 
-/*
- * Story is the only available pillar during this visual checkpoint.
- * Later pillars will unlock through approved project state.
- */
-if ($requestedPillar !== 'story') {
+$requestedPillar = mb_strtolower(
+    trim((string) ($_GET['pillar'] ?? 'story'))
+);
+
+if (
+    !isset($pillarConfigurations[$requestedPillar])
+    || !$pillarConfigurations[$requestedPillar]['available']
+) {
     $requestedPillar = 'story';
 }
 
@@ -122,6 +154,9 @@ $activePillar = $pillarConfigurations[$requestedPillar];
 
 $firstName = $authenticatedUser->firstName();
 $avatarUrl = $authenticatedUser->avatarUrl();
+
+$workTitle = $work->title();
+$workType = $work->typeLabel();
 ?>
 <!doctype html>
 <html lang="en">
@@ -139,7 +174,8 @@ $avatarUrl = $authenticatedUser->avatarUrl();
             ENT_QUOTES,
             'UTF-8'
         ) ?>
-        | <?= htmlspecialchars(
+        |
+        <?= htmlspecialchars(
             $workTitle,
             ENT_QUOTES,
             'UTF-8'
@@ -152,8 +188,16 @@ $avatarUrl = $authenticatedUser->avatarUrl();
         href="/assets/css/app.css"
     >
 </head>
+
 <body class="forge-body">
     <div class="forge-app">
+
+        <!--
+        |--------------------------------------------------------------------------
+        | Authenticated application header
+        |--------------------------------------------------------------------------
+        -->
+
         <header class="app-header">
             <a
                 class="app-brand"
@@ -183,7 +227,10 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                 </a>
 
                 <a
-                    class="app-header__link app-header__link--active"
+                    class="
+                        app-header__link
+                        app-header__link--active
+                    "
                     href="/forge.php?work=<?= $work->id() ?>&pillar=story"
                     aria-current="page"
                 >
@@ -247,7 +294,11 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                 </div>
 
                 <a
-                    class="button button--ghost button--small"
+                    class="
+                        button
+                        button--ghost
+                        button--small
+                    "
                     href="/logout.php"
                 >
                     Sign Out
@@ -255,20 +306,18 @@ $avatarUrl = $authenticatedUser->avatarUrl();
             </div>
         </header>
 
+        <!--
+        |--------------------------------------------------------------------------
+        | Current Work and active workflow state
+        |--------------------------------------------------------------------------
+        -->
+
         <section class="forge-project-bar">
             <div class="forge-project-bar__identity">
-                <span class="eyebrow">
-                    Current Work
-                </span>
-
-                <div class="forge-project-bar__title-row">
-                    <h1 class="forge-project-bar__title">
-                        <?= htmlspecialchars(
-                            $workTitle,
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>
-                    </h1>
+                <div class="forge-project-bar__meta-row">
+                    <span class="eyebrow">
+                        Current Work
+                    </span>
 
                     <span class="forge-project-bar__type">
                         <?= htmlspecialchars(
@@ -277,19 +326,150 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                             'UTF-8'
                         ) ?>
                     </span>
+
+                    <span class="forge-project-bar__introduction">
+                        <?= htmlspecialchars(
+                            $activePillar['introduction'],
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </span>
+                </div>
+
+                <div class="forge-project-bar__main-row">
+                    <h1 class="forge-project-bar__title">
+                        <?= htmlspecialchars(
+                            $workTitle,
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </h1>
+
+                    <div class="forge-project-bar__workflow">
+                        <div class="forge-project-bar__pillar">
+                            <span>
+                                Pillar
+                                <?= htmlspecialchars(
+                                    $activePillar['number'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                            <span aria-hidden="true">
+                                ●
+                            </span>
+
+                            <strong>
+                                <?= htmlspecialchars(
+                                    $activePillar['name'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </strong>
+                        </div>
+
+                        <div class="forge-project-bar__status">
+                            <span>
+                                Status:
+                            </span>
+
+                            <strong>
+                                <?= htmlspecialchars(
+                                    $activePillar['status'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </strong>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <a
-                class="button button--secondary button--small"
+                class="
+                    button
+                    button--secondary
+                    button--small
+                "
                 href="/workspace.php"
             >
                 Return to My Works
             </a>
         </section>
 
-        <div class="forge-layout">
-            <aside class="forge-sidebar">
+        <!--
+        |--------------------------------------------------------------------------
+        | Collapsible panel controls
+        |--------------------------------------------------------------------------
+        -->
+
+        <div
+            class="forge-panel-controls"
+            aria-label="Forge panel controls"
+        >
+            <button
+                class="forge-panel-toggle"
+                id="toggle-pillars"
+                type="button"
+                aria-controls="forge-sidebar"
+                aria-expanded="true"
+            >
+                <span
+                    class="forge-panel-toggle__icon"
+                    aria-hidden="true"
+                >
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+
+                <span class="forge-panel-toggle__label">
+                    Hide Pillars
+                </span>
+            </button>
+
+            <button
+                class="forge-panel-toggle"
+                id="toggle-memory"
+                type="button"
+                aria-controls="forge-memory"
+                aria-expanded="true"
+            >
+                <span class="forge-panel-toggle__label">
+                    Hide Memory
+                </span>
+
+                <span
+                    class="
+                        forge-panel-toggle__icon
+                        forge-panel-toggle__icon--memory
+                    "
+                    aria-hidden="true"
+                >
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
+        </div>
+
+        <!--
+        |--------------------------------------------------------------------------
+        | Main Forge layout
+        |--------------------------------------------------------------------------
+        -->
+
+        <div
+            class="forge-layout"
+            id="forge-layout"
+        >
+
+            <!-- Five Pillars navigation -->
+
+            <aside
+                class="forge-sidebar"
+                id="forge-sidebar"
+            >
                 <div class="forge-sidebar__heading">
                     <p class="eyebrow">
                         The Five Pillars
@@ -305,14 +485,16 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                     class="forge-pillar-navigation"
                     aria-label="Creative pillars"
                 >
-                    <?php
-                    foreach (
+                    <?php foreach (
                         $pillarConfigurations
                         as $slug => $pillarConfiguration
-                    ):
+                    ): ?>
+                        <?php
                         $isActive = $slug === $requestedPillar;
-                        $isAvailable = $slug === 'story';
-                    ?>
+                        $isAvailable =
+                            $pillarConfiguration['available'];
+                        ?>
+
                         <?php if ($isAvailable): ?>
                             <a
                                 class="
@@ -382,10 +564,7 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                                     </small>
                                 </span>
 
-                                <span
-                                    class="forge-pillar-link__status"
-                                    aria-label="Locked"
-                                >
+                                <span class="forge-pillar-link__status">
                                     Locked
                                 </span>
                             </span>
@@ -394,46 +573,9 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                 </nav>
             </aside>
 
+            <!-- Creative Partner conversation -->
+
             <main class="forge-conversation">
-                <header class="forge-conversation__header">
-                    <div>
-                        <p class="eyebrow">
-                            Pillar
-                            <?= htmlspecialchars(
-                                $activePillar['number'],
-                                ENT_QUOTES,
-                                'UTF-8'
-                            ) ?>
-                        </p>
-
-                        <h2 class="forge-conversation__title">
-                            <?= htmlspecialchars(
-                                $activePillar['name'],
-                                ENT_QUOTES,
-                                'UTF-8'
-                            ) ?>
-                        </h2>
-
-                        <p class="forge-conversation__introduction">
-                            <?= htmlspecialchars(
-                                $activePillar['introduction'],
-                                ENT_QUOTES,
-                                'UTF-8'
-                            ) ?>
-                        </p>
-                    </div>
-
-                    <div class="forge-pillar-status">
-                        <span class="forge-pillar-status__label">
-                            Status
-                        </span>
-
-                        <strong>
-                            Beginning
-                        </strong>
-                    </div>
-                </header>
-
                 <section
                     class="forge-message-history"
                     aria-label="Creative Partner conversation"
@@ -451,7 +593,11 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                             </span>
 
                             <span class="forge-message__role">
-                                Story Guide
+                                <?= htmlspecialchars(
+                                    $activePillar['guide_role'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
                             </span>
                         </header>
 
@@ -491,6 +637,12 @@ $avatarUrl = $authenticatedUser->avatarUrl();
 
                     <input
                         type="hidden"
+                        name="work_id"
+                        value="<?= $work->id() ?>"
+                    >
+
+                    <input
+                        type="hidden"
                         name="pillar"
                         value="<?= htmlspecialchars(
                             $requestedPillar,
@@ -500,7 +652,6 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                     >
 
                     <label
-                        class="sr-only"
                         for="forge_message"
                     >
                         Reply to the Creative Partner
@@ -522,7 +673,10 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                         </span>
 
                         <button
-                            class="button button--primary"
+                            class="
+                                button
+                                button--primary
+                            "
                             type="submit"
                             disabled
                         >
@@ -532,7 +686,12 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                 </form>
             </main>
 
-            <aside class="forge-memory">
+            <!-- Creative Memory -->
+
+            <aside
+                class="forge-memory"
+                id="forge-memory"
+            >
                 <header class="forge-memory__header">
                     <p class="eyebrow">
                         Creative Memory
@@ -556,7 +715,9 @@ $avatarUrl = $authenticatedUser->avatarUrl();
 
                     <dl class="forge-memory-list">
                         <div>
-                            <dt>Title</dt>
+                            <dt>
+                                Title
+                            </dt>
 
                             <dd>
                                 <?= htmlspecialchars(
@@ -568,7 +729,9 @@ $avatarUrl = $authenticatedUser->avatarUrl();
                         </div>
 
                         <div>
-                            <dt>Type</dt>
+                            <dt>
+                                Type
+                            </dt>
 
                             <dd>
                                 <?= htmlspecialchars(
@@ -608,7 +771,8 @@ $avatarUrl = $authenticatedUser->avatarUrl();
 
                 <section class="forge-memory__section">
                     <h3>
-                        Perspective</h3>
+                        Perspective
+                    </h3>
 
                     <div class="forge-memory-empty">
                         <p>
@@ -626,5 +790,155 @@ $avatarUrl = $authenticatedUser->avatarUrl();
             </aside>
         </div>
     </div>
+
+    <script>
+        (() => {
+            const layout = document.getElementById(
+                'forge-layout'
+            );
+
+            const pillarsButton = document.getElementById(
+                'toggle-pillars'
+            );
+
+            const memoryButton = document.getElementById(
+                'toggle-memory'
+            );
+
+            if (!layout || !pillarsButton || !memoryButton) {
+                return;
+            }
+
+            const storageKeys = {
+                pillars:
+                    'sonicFoundry.forge.pillarsCollapsed',
+
+                memory:
+                    'sonicFoundry.forge.memoryCollapsed'
+            };
+
+            const readStoredBoolean = (key) => {
+                try {
+                    return localStorage.getItem(key) === 'true';
+                } catch {
+                    return false;
+                }
+            };
+
+            const storeBoolean = (key, value) => {
+                try {
+                    localStorage.setItem(
+                        key,
+                        String(value)
+                    );
+                } catch {
+                    /*
+                     * Panel controls continue functioning even when
+                     * browser storage is unavailable.
+                     */
+                }
+            };
+
+            const setButtonState = (
+                button,
+                expanded,
+                expandedText,
+                collapsedText
+            ) => {
+                button.setAttribute(
+                    'aria-expanded',
+                    expanded ? 'true' : 'false'
+                );
+
+                const label = button.querySelector(
+                    '.forge-panel-toggle__label'
+                );
+
+                if (label) {
+                    label.textContent = expanded
+                        ? expandedText
+                        : collapsedText;
+                }
+            };
+
+            const setPillarsState = (collapsed) => {
+                layout.classList.toggle(
+                    'forge-layout--pillars-collapsed',
+                    collapsed
+                );
+
+                setButtonState(
+                    pillarsButton,
+                    !collapsed,
+                    'Hide Pillars',
+                    'Show Pillars'
+                );
+            };
+
+            const setMemoryState = (collapsed) => {
+                layout.classList.toggle(
+                    'forge-layout--memory-collapsed',
+                    collapsed
+                );
+
+                setButtonState(
+                    memoryButton,
+                    !collapsed,
+                    'Hide Memory',
+                    'Show Memory'
+                );
+            };
+
+            const applyStoredState = () => {
+                setPillarsState(
+                    readStoredBoolean(
+                        storageKeys.pillars
+                    )
+                );
+
+                setMemoryState(
+                    readStoredBoolean(
+                        storageKeys.memory
+                    )
+                );
+            };
+
+            pillarsButton.addEventListener(
+                'click',
+                () => {
+                    const collapsed =
+                        !layout.classList.contains(
+                            'forge-layout--pillars-collapsed'
+                        );
+
+                    setPillarsState(collapsed);
+
+                    storeBoolean(
+                        storageKeys.pillars,
+                        collapsed
+                    );
+                }
+            );
+
+            memoryButton.addEventListener(
+                'click',
+                () => {
+                    const collapsed =
+                        !layout.classList.contains(
+                            'forge-layout--memory-collapsed'
+                        );
+
+                    setMemoryState(collapsed);
+
+                    storeBoolean(
+                        storageKeys.memory,
+                        collapsed
+                    );
+                }
+            );
+
+            applyStoredState();
+        })();
+    </script>
 </body>
 </html>

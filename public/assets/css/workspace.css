@@ -429,4 +429,193 @@ a.pillar-link:hover {
     .works-header .button {
         width: 100%;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Work Cards
+    |--------------------------------------------------------------------------
+    */
+
+    .works-grid {
+        display: grid;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+        gap: var(--space-6);
+    }
+
+    .work-card {
+        display: grid;
+        gap: var(--space-8);
+
+        padding: var(--space-8);
+
+        background:
+            radial-gradient(
+                circle at 100% 0%,
+                rgba(255, 121, 0, 0.09),
+                transparent 16rem
+            ),
+            linear-gradient(
+                145deg,
+                rgba(255, 255, 255, 0.035),
+                rgba(255, 255, 255, 0.008)
+            ),
+            var(--color-panel);
+
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+
+        box-shadow: var(--shadow-medium);
+
+        transition:
+            transform var(--transition-fast),
+            border-color var(--transition-normal),
+            box-shadow var(--transition-normal);
+    }
+
+    .work-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--color-border-strong);
+        box-shadow:
+            var(--shadow-heavy),
+            var(--glow-gold);
+    }
+
+    .work-card__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: var(--space-5);
+    }
+
+    .work-card__type {
+        margin: 0 0 var(--space-2);
+
+        color: var(--color-ember-bright);
+        font-size: var(--font-size-xs);
+        font-weight: 800;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+    }
+
+    .work-card__title {
+        margin: 0;
+
+        font-size: clamp(
+            1.7rem,
+            3vw,
+            2.4rem
+        );
+    }
+
+    .work-card__status {
+        flex-shrink: 0;
+
+        padding:
+            var(--space-2)
+            var(--space-3);
+
+        color: var(--color-gold);
+        background: rgba(213, 170, 93, 0.08);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-round);
+
+        font-size: var(--font-size-xs);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .work-card__progress {
+        display: grid;
+        gap: var(--space-4);
+    }
+
+    .work-card__pillar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-4);
+    }
+
+    .work-card__pillar span {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    .work-card__pillar strong {
+        color: var(--color-silver);
+        font-family: var(--font-heading);
+        font-size: var(--font-size-md);
+    }
+
+    .work-card__progress-track {
+        position: relative;
+        width: 100%;
+        height: 10px;
+        overflow: hidden;
+
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid var(--color-border-muted);
+        border-radius: var(--radius-round);
+    }
+
+    .work-card__progress-value {
+        display: block;
+        width: 0;
+        min-width: 10px;
+        height: 100%;
+
+        background:
+            linear-gradient(
+                90deg,
+                var(--color-fire),
+                var(--color-ember-bright)
+            );
+
+        border-radius: inherit;
+        box-shadow: var(--glow-ember);
+    }
+
+    .work-card__footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-6);
+
+        padding-top: var(--space-6);
+
+        border-top: 1px solid var(--color-border-muted);
+    }
+
+    .work-card__updated {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+    }
+
+    .work-card__updated time {
+        color: var(--color-text-soft);
+    }
+
+    @media (max-width: 980px) {
+        .works-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 620px) {
+        .work-card {
+            padding: var(--space-6);
+        }
+
+        .work-card__header,
+        .work-card__footer {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .work-card__footer .button {
+            width: 100%;
+        }
+    }
 }
