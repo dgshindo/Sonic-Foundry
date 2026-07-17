@@ -1188,4 +1188,22 @@ a.forge-pillar-link:hover {
     .forge-memory {
         display: none;
     }
+
+    #forge-error {
+        max-width: 900px;
+        margin:
+            0
+            0
+            var(--space-6);
+    }
+
+    .forge-message__body p {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .forge-composer textarea:disabled {
+        cursor: wait;
+        opacity: 0.72;
+    }
 }

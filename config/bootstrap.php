@@ -1,34 +1,46 @@
 <?php
 declare(strict_types=1);
 
-use SonicFoundry\Auth\Session;
 use SonicFoundry\Application\Container;
+use SonicFoundry\Auth\Session;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 /*
- * Load .env
- */
+|--------------------------------------------------------------------------
+| Load .env
+|--------------------------------------------------------------------------
+*/
 
 $envPath = dirname(__DIR__) . '/.env';
 
 if (!is_file($envPath)) {
-    throw new RuntimeException('.env file not found.');
+    throw new RuntimeException(
+        '.env file not found.'
+    );
 }
 
 $lines = file(
     $envPath,
-    FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+    FILE_IGNORE_NEW_LINES
+    | FILE_SKIP_EMPTY_LINES
 );
 
 foreach ($lines as $line) {
+
     $line = trim($line);
 
-    if ($line === '' || str_starts_with($line, '#')) {
+    if (
+        $line === ''
+        || str_starts_with($line, '#')
+    ) {
         continue;
     }
 
-    [$name, $value] = array_pad(
+    [
+        $name,
+        $value
+    ] = array_pad(
         explode('=', $line, 2),
         2,
         ''
@@ -38,28 +50,51 @@ foreach ($lines as $line) {
     $value = trim($value);
 
     if (
-        strlen($value) >= 2 &&
-        (
-            ($value[0] === '"' && $value[-1] === '"') ||
-            ($value[0] === "'" && $value[-1] === "'")
+        strlen($value) >= 2
+        && (
+            (
+                $value[0] === '"'
+                && $value[-1] === '"'
+            )
+            || (
+                $value[0] === "'"
+                && $value[-1] === "'"
+            )
         )
     ) {
-        $value = substr($value, 1, -1);
+        $value = substr(
+            $value,
+            1,
+            -1
+        );
     }
 
     $_ENV[$name] = $value;
-    putenv($name . '=' . $value);
+
+    putenv(
+        $name . '=' . $value
+    );
 }
 
 /*
- * Environment helper
- */
+|--------------------------------------------------------------------------
+| Environment helper
+|--------------------------------------------------------------------------
+*/
 
-function env(string $key, ?string $default = null): ?string
-{
-    $value = $_ENV[$key] ?? getenv($key);
+function env(
+    string $key,
+    ?string $default = null
+): ?string {
+    $value =
+        $_ENV[$key]
+        ?? getenv($key);
 
-    if ($value === false || $value === null || $value === '') {
+    if (
+        $value === false
+        || $value === null
+        || $value === ''
+    ) {
         return $default;
     }
 
@@ -67,17 +102,27 @@ function env(string $key, ?string $default = null): ?string
 }
 
 /*
- * Application composition
- */
+|--------------------------------------------------------------------------
+| Start session first
+|--------------------------------------------------------------------------
+*/
 
 Session::start();
+
+/*
+|--------------------------------------------------------------------------
+| Build application container
+|--------------------------------------------------------------------------
+*/
 
 $container = new Container();
 
 $auth = $container->auth();
+
 $userRepository = $container->users();
 
 return [
+    'container' => $container,
     'auth' => $auth,
     'userRepository' => $userRepository,
 ];

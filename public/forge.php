@@ -6,6 +6,12 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 //use DomainException;
 use SonicFoundry\Auth\Session;
 
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
+
 $authenticatedUser = $auth->requireAuthentication();
 
 /*
@@ -20,10 +26,10 @@ $workId = filter_input(
     FILTER_VALIDATE_INT
 );
 
-if (!$workId) {
+if (!is_int($workId) || $workId < 1) {
     Session::flash(
         'work_error',
-        'Select a work before entering the Forge.'
+        'Select a Work before entering the Forge.'
     );
 
     header('Location: /workspace.php');
@@ -31,14 +37,16 @@ if (!$workId) {
 }
 
 try {
-    $work = $container->workService()->findOwnedWork(
-        workId: $workId,
-        user: $authenticatedUser,
-    );
-} catch (DomainException) {
+    $work = $container
+        ->workService()
+        ->findOwnedWork(
+            workId: $workId,
+            user: $authenticatedUser,
+        );
+} catch (\DomainException) {
     Session::flash(
         'work_error',
-        'The requested work could not be found.'
+        'The requested Work could not be found.'
     );
 
     header('Location: /workspace.php');
@@ -50,8 +58,9 @@ try {
 | Pillar configuration
 |--------------------------------------------------------------------------
 |
-| Story is presently the only unlocked pillar. The same configuration
-| structure will later drive Emotion, Identity, Sound, and Impact.
+| Story is presently the only unlocked pillar.
+| The remaining pillars will later derive availability from persistent
+| progress associated with this Work.
 |
 */
 
@@ -65,7 +74,7 @@ $pillarConfigurations = [
             . 'there is something worth saying.'
         ),
         'opening_prompt' => (
-            'Tell me about the story behind this work. '
+            'Tell me about the story behind this Work. '
             . 'What made you feel that it needed to exist?'
         ),
         'guide_role' => 'Story Guide',
@@ -81,7 +90,7 @@ $pillarConfigurations = [
             'Emotion defines the journey your listener experiences.'
         ),
         'opening_prompt' => (
-            'How should the listener feel when this work begins, '
+            'How should the listener feel when this Work begins, '
             . 'and how should that feeling change before it ends?'
         ),
         'guide_role' => 'Emotion Guide',
@@ -94,10 +103,11 @@ $pillarConfigurations = [
         'name' => 'Identity',
         'question' => 'Who is speaking?',
         'introduction' => (
-            'Identity gives the work its voice, values, and perspective.'
+            'Identity gives the Work its voice, values, '
+            . 'and perspective.'
         ),
         'opening_prompt' => (
-            'What makes this work unmistakably yours?'
+            'What makes this Work unmistakably yours?'
         ),
         'guide_role' => 'Identity Guide',
         'status' => 'Locked',
@@ -109,12 +119,12 @@ $pillarConfigurations = [
         'name' => 'Sound',
         'question' => 'How does your world sound?',
         'introduction' => (
-            'Sound transforms your creative identity into '
-            . 'an audible world.'
+            'Sound transforms your creative identity '
+            . 'into an audible world.'
         ),
         'opening_prompt' => (
-            'What instruments, textures, rhythms, and production '
-            . 'choices belong in this work?'
+            'What instruments, textures, rhythms, '
+            . 'and production choices belong in this Work?'
         ),
         'guide_role' => 'Sound Guide',
         'status' => 'Locked',
@@ -130,7 +140,7 @@ $pillarConfigurations = [
             . 'after the music ends.'
         ),
         'opening_prompt' => (
-            'When someone finishes this work, '
+            'When someone finishes this Work, '
             . 'what do you hope has changed for them?'
         ),
         'guide_role' => 'Impact Guide',
@@ -140,7 +150,9 @@ $pillarConfigurations = [
 ];
 
 $requestedPillar = mb_strtolower(
-    trim((string) ($_GET['pillar'] ?? 'story'))
+    trim(
+        (string) ($_GET['pillar'] ?? 'story')
+    )
 );
 
 if (
@@ -151,6 +163,45 @@ if (
 }
 
 $activePillar = $pillarConfigurations[$requestedPillar];
+
+/*
+|--------------------------------------------------------------------------
+| Load persisted conversation
+|--------------------------------------------------------------------------
+*/
+
+try {
+    $conversationMessages = $container
+        ->conversationService()
+        ->messagesForWork(
+            user: $authenticatedUser,
+            workId: $work->id(),
+            pillarValue: $requestedPillar,
+        );
+} catch (\DomainException $error) {
+    Session::flash(
+        'work_error',
+        $error->getMessage()
+    );
+
+    header('Location: /workspace.php');
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| View data
+|--------------------------------------------------------------------------
+*/
+
+$forgeError = Session::getFlash(
+    'forge_error'
+);
+
+$oldForgeMessage = Session::getFlash(
+    'forge_message',
+    ''
+);
 
 $firstName = $authenticatedUser->firstName();
 $avatarUrl = $authenticatedUser->avatarUrl();
@@ -255,7 +306,10 @@ $workType = $work->typeLabel();
                         ) ?>
                     </span>
 
-                    <?php if ($avatarUrl): ?>
+                    <?php if (
+                        is_string($avatarUrl)
+                        && $avatarUrl !== ''
+                    ): ?>
                         <img
                             class="user-menu__avatar"
                             src="<?= htmlspecialchars(
@@ -455,7 +509,7 @@ $workType = $work->typeLabel();
 
         <!--
         |--------------------------------------------------------------------------
-        | Main Forge layout
+        | Main Forge workspace
         |--------------------------------------------------------------------------
         -->
 
@@ -464,7 +518,7 @@ $workType = $work->typeLabel();
             id="forge-layout"
         >
 
-            <!-- Five Pillars navigation -->
+            <!-- Five Pillars -->
 
             <aside
                 class="forge-sidebar"
@@ -476,7 +530,7 @@ $workType = $work->typeLabel();
                     </p>
 
                     <p>
-                        Develop the work deliberately, one creative
+                        Develop the Work deliberately, one creative
                         foundation at a time.
                     </p>
                 </div>
@@ -490,9 +544,13 @@ $workType = $work->typeLabel();
                         as $slug => $pillarConfiguration
                     ): ?>
                         <?php
-                        $isActive = $slug === $requestedPillar;
-                        $isAvailable =
-                            $pillarConfiguration['available'];
+                        $isActive = (
+                            $slug === $requestedPillar
+                        );
+
+                        $isAvailable = (
+                            $pillarConfiguration['available']
+                        );
                         ?>
 
                         <?php if ($isAvailable): ?>
@@ -573,14 +631,30 @@ $workType = $work->typeLabel();
                 </nav>
             </aside>
 
-            <!-- Creative Partner conversation -->
+            <!-- Conversation -->
 
             <main class="forge-conversation">
                 <section
                     class="forge-message-history"
+                    id="forge-message-history"
                     aria-label="Creative Partner conversation"
                     aria-live="polite"
                 >
+                    <div
+                        class="form-alert form-alert--error"
+                        id="forge-error"
+                        role="alert"
+                        <?= $forgeError ? '' : 'hidden' ?>
+                    >
+                        <?= $forgeError
+                            ? htmlspecialchars(
+                                (string) $forgeError,
+                                ENT_QUOTES,
+                                'UTF-8'
+                            )
+                            : '' ?>
+                    </div>
+
                     <article
                         class="
                             forge-message
@@ -612,16 +686,85 @@ $workType = $work->typeLabel();
                         </div>
                     </article>
 
-                    <div class="forge-conversation-empty">
-                        <p>
-                            Your conversation will remain with this work
-                            as its creative direction develops.
-                        </p>
-                    </div>
+                    <?php if ($conversationMessages === []): ?>
+                        <div
+                            class="forge-conversation-empty"
+                            id="forge-conversation-empty"
+                        >
+                            <p>
+                                Your conversation will remain with this
+                                Work as its creative direction develops.
+                            </p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach (
+                            $conversationMessages
+                            as $message
+                        ): ?>
+                            <?php
+                            $isUserMessage =
+                                $message->isUserMessage();
+                            ?>
+
+                            <article
+                                class="
+                                    forge-message
+                                    <?= $isUserMessage
+                                        ? 'forge-message--user'
+                                        : 'forge-message--partner' ?>
+                                "
+                                data-message-id="<?= $message->id() ?>"
+                            >
+                                <header class="forge-message__header">
+                                    <span class="forge-message__identity">
+                                        <?= $isUserMessage
+                                            ? htmlspecialchars(
+                                                $firstName,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            )
+                                            : 'Creative Partner' ?>
+                                    </span>
+
+                                    <time
+                                        class="forge-message__role"
+                                        datetime="<?= htmlspecialchars(
+                                            $message
+                                                ->createdAt()
+                                                ->format(DATE_ATOM),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+                                        <?= htmlspecialchars(
+                                            $message
+                                                ->createdAt()
+                                                ->format(
+                                                    'M j, g:i A'
+                                                ),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </time>
+                                </header>
+
+                                <div class="forge-message__body">
+                                    <p><?= htmlspecialchars(
+                                        $message->content(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?></p>
+                                </div>
+                            </article>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </section>
+
+                <!-- Composer -->
 
                 <form
                     class="forge-composer"
+                    id="forge-composer"
                     method="post"
                     action="/forge/message.php"
                 >
@@ -651,9 +794,7 @@ $workType = $work->typeLabel();
                         ) ?>"
                     >
 
-                    <label
-                        for="forge_message"
-                    >
+                    <label for="forge_message">
                         Reply to the Creative Partner
                     </label>
 
@@ -662,23 +803,26 @@ $workType = $work->typeLabel();
                         name="message"
                         rows="4"
                         maxlength="6000"
-                        placeholder="Tell the Creative Partner what is behind this work..."
-                        disabled
-                    ></textarea>
+                        placeholder="Tell the Creative Partner what is behind this Work..."
+                        required
+                    ><?= htmlspecialchars(
+                        (string) $oldForgeMessage,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?></textarea>
 
                     <footer class="forge-composer__footer">
-                        <span class="forge-composer__notice">
-                            Conversation will be connected in the next
-                            Forge checkpoint.
+                        <span
+                            class="forge-composer__notice"
+                            id="forge-composer-notice"
+                        >
+                            Your message will be saved to this Work.
                         </span>
 
                         <button
-                            class="
-                                button
-                                button--primary
-                            "
+                            class="button button--primary"
+                            id="forge-send-button"
                             type="submit"
-                            disabled
                         >
                             Send
                         </button>
@@ -791,8 +935,16 @@ $workType = $work->typeLabel();
         </div>
     </div>
 
+    <!--
+    |--------------------------------------------------------------------------
+    | Collapsible panel behavior
+    |--------------------------------------------------------------------------
+    -->
+
     <script>
         (() => {
+            'use strict';
+
             const layout = document.getElementById(
                 'forge-layout'
             );
@@ -805,7 +957,11 @@ $workType = $work->typeLabel();
                 'toggle-memory'
             );
 
-            if (!layout || !pillarsButton || !memoryButton) {
+            if (
+                !layout
+                || !pillarsButton
+                || !memoryButton
+            ) {
                 return;
             }
 
@@ -819,13 +975,19 @@ $workType = $work->typeLabel();
 
             const readStoredBoolean = (key) => {
                 try {
-                    return localStorage.getItem(key) === 'true';
+                    return (
+                        localStorage.getItem(key)
+                        === 'true'
+                    );
                 } catch {
                     return false;
                 }
             };
 
-            const storeBoolean = (key, value) => {
+            const storeBoolean = (
+                key,
+                value
+            ) => {
                 try {
                     localStorage.setItem(
                         key,
@@ -833,13 +995,13 @@ $workType = $work->typeLabel();
                     );
                 } catch {
                     /*
-                     * Panel controls continue functioning even when
-                     * browser storage is unavailable.
+                     * The controls remain functional when browser
+                     * storage is unavailable.
                      */
                 }
             };
 
-            const setButtonState = (
+            const updateButton = (
                 button,
                 expanded,
                 expandedText,
@@ -861,13 +1023,15 @@ $workType = $work->typeLabel();
                 }
             };
 
-            const setPillarsState = (collapsed) => {
+            const setPillarsCollapsed = (
+                collapsed
+            ) => {
                 layout.classList.toggle(
                     'forge-layout--pillars-collapsed',
                     collapsed
                 );
 
-                setButtonState(
+                updateButton(
                     pillarsButton,
                     !collapsed,
                     'Hide Pillars',
@@ -875,31 +1039,19 @@ $workType = $work->typeLabel();
                 );
             };
 
-            const setMemoryState = (collapsed) => {
+            const setMemoryCollapsed = (
+                collapsed
+            ) => {
                 layout.classList.toggle(
                     'forge-layout--memory-collapsed',
                     collapsed
                 );
 
-                setButtonState(
+                updateButton(
                     memoryButton,
                     !collapsed,
                     'Hide Memory',
                     'Show Memory'
-                );
-            };
-
-            const applyStoredState = () => {
-                setPillarsState(
-                    readStoredBoolean(
-                        storageKeys.pillars
-                    )
-                );
-
-                setMemoryState(
-                    readStoredBoolean(
-                        storageKeys.memory
-                    )
                 );
             };
 
@@ -911,7 +1063,7 @@ $workType = $work->typeLabel();
                             'forge-layout--pillars-collapsed'
                         );
 
-                    setPillarsState(collapsed);
+                    setPillarsCollapsed(collapsed);
 
                     storeBoolean(
                         storageKeys.pillars,
@@ -928,7 +1080,7 @@ $workType = $work->typeLabel();
                             'forge-layout--memory-collapsed'
                         );
 
-                    setMemoryState(collapsed);
+                    setMemoryCollapsed(collapsed);
 
                     storeBoolean(
                         storageKeys.memory,
@@ -937,8 +1089,29 @@ $workType = $work->typeLabel();
                 }
             );
 
-            applyStoredState();
+            setPillarsCollapsed(
+                readStoredBoolean(
+                    storageKeys.pillars
+                )
+            );
+
+            setMemoryCollapsed(
+                readStoredBoolean(
+                    storageKeys.memory
+                )
+            );
         })();
     </script>
+
+    <!--
+    |--------------------------------------------------------------------------
+    | Asynchronous conversation behavior
+    |--------------------------------------------------------------------------
+    -->
+
+    <script
+        src="/assets/js/forge.js"
+        defer
+    ></script>
 </body>
 </html>

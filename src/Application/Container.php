@@ -14,6 +14,9 @@ use SonicFoundry\Auth\PasswordLoginService;
 use SonicFoundry\Auth\RegistrationService;
 use SonicFoundry\Work\WorkRepository;
 use SonicFoundry\Work\WorkService;
+use SonicFoundry\Conversation\ConversationRepository;
+use SonicFoundry\Conversation\ConversationService;
+
 
 final class Container
 {
@@ -34,6 +37,10 @@ final class Container
     private ?WorkRepository $workRepository = null;
 
     private ?WorkService $workService = null;
+
+    private ?ConversationRepository $conversationRepository = null;
+
+    private ?ConversationService $conversationService = null;
 
     public function database(): PDO
     {
@@ -156,6 +163,37 @@ final class Container
         }
 
         return $this->workService;
+    }
+
+    public function conversations(): ConversationRepository
+    {
+        if (
+            !$this->conversationRepository
+            instanceof ConversationRepository
+        ) {
+            $this->conversationRepository =
+                new ConversationRepository(
+                    $this->database()
+                );
+        }
+
+        return $this->conversationRepository;
+    }
+
+    public function conversationService(): ConversationService
+    {
+        if (
+            !$this->conversationService
+            instanceof ConversationService
+        ) {
+            $this->conversationService =
+                new ConversationService(
+                    messages: $this->conversations(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->conversationService;
     }
 
 }

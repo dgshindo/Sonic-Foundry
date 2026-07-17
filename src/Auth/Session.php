@@ -15,10 +15,13 @@ final class Session
             return;
         }
 
-        $secure = isset($_SERVER['HTTPS'])
-            && $_SERVER['HTTPS'] !== 'off';
+        $secure = (
+            isset($_SERVER['HTTPS'])
+            && $_SERVER['HTTPS'] !== 'off'
+        );
 
         session_start([
+            'cookie_path' => '/',
             'cookie_httponly' => true,
             'cookie_secure' => $secure,
             'cookie_samesite' => 'Lax',
@@ -32,54 +35,8 @@ final class Session
     public static function regenerate(): void
     {
         self::start();
+
         session_regenerate_id(true);
-    }
-
-    public static function put(string $key, mixed $value): void
-    {
-        self::start();
-        $_SESSION[$key] = $value;
-    }
-
-    public static function get(
-        string $key,
-        mixed $default = null
-    ): mixed {
-        self::start();
-
-        return $_SESSION[$key] ?? $default;
-    }
-
-    public static function has(string $key): bool
-    {
-        self::start();
-
-        return array_key_exists($key, $_SESSION);
-    }
-
-    public static function forget(string $key): void
-    {
-        self::start();
-        unset($_SESSION[$key]);
-    }
-
-    public static function flash(
-        string $key,
-        mixed $value
-    ): void {
-        self::start();
-
-        $_SESSION[self::FLASH_KEY]['new'][$key] = $value;
-    }
-
-    public static function getFlash(
-        string $key,
-        mixed $default = null
-    ): mixed {
-        self::start();
-
-        return $_SESSION[self::FLASH_KEY]['old'][$key]
-            ?? $default;
     }
 
     public static function destroy(): void
@@ -108,14 +65,60 @@ final class Session
         session_destroy();
     }
 
-    private static function ageFlashData(): void
-    {
-        $flash = $_SESSION[self::FLASH_KEY] ?? [];
+    public static function put(
+        string $key,
+        mixed $value
+    ): void {
+        self::start();
 
-        $_SESSION[self::FLASH_KEY] = [
-            'old' => $flash['new'] ?? [],
-            'new' => [],
-        ];
+        $_SESSION[$key] = $value;
+    }
+
+    public static function get(
+        string $key,
+        mixed $default = null
+    ): mixed {
+        self::start();
+
+        return $_SESSION[$key] ?? $default;
+    }
+
+    public static function has(
+        string $key
+    ): bool {
+        self::start();
+
+        return array_key_exists(
+            $key,
+            $_SESSION
+        );
+    }
+
+    public static function forget(
+        string $key
+    ): void {
+        self::start();
+
+        unset($_SESSION[$key]);
+    }
+
+    public static function flash(
+        string $key,
+        mixed $value
+    ): void {
+        self::start();
+
+        $_SESSION[self::FLASH_KEY]['new'][$key] = $value;
+    }
+
+    public static function getFlash(
+        string $key,
+        mixed $default = null
+    ): mixed {
+        self::start();
+
+        return $_SESSION[self::FLASH_KEY]['old'][$key]
+            ?? $default;
     }
 
     public static function csrfToken(): string
@@ -124,8 +127,14 @@ final class Session
 
         $token = $_SESSION[self::CSRF_KEY] ?? null;
 
-        if (!is_string($token) || $token === '') {
-            $token = bin2hex(random_bytes(32));
+        if (
+            !is_string($token)
+            || $token === ''
+        ) {
+            $token = bin2hex(
+                random_bytes(32)
+            );
+
             $_SESSION[self::CSRF_KEY] = $token;
         }
 
@@ -137,7 +146,9 @@ final class Session
     ): bool {
         self::start();
 
-        $storedToken = $_SESSION[self::CSRF_KEY] ?? null;
+        $storedToken =
+            $_SESSION[self::CSRF_KEY]
+            ?? null;
 
         if (
             !is_string($storedToken)
@@ -151,5 +162,17 @@ final class Session
             $storedToken,
             $submittedToken
         );
+    }
+
+    private static function ageFlashData(): void
+    {
+        $flash =
+            $_SESSION[self::FLASH_KEY]
+            ?? [];
+
+        $_SESSION[self::FLASH_KEY] = [
+            'old' => $flash['new'] ?? [],
+            'new' => [],
+        ];
     }
 }
