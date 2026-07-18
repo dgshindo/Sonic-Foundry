@@ -712,7 +712,7 @@ a.forge-pillar-link:hover {
 
 .forge-message__body {
     color: var(--color-text-soft);
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-base);
     line-height: var(--line-height-loose);
 }
 

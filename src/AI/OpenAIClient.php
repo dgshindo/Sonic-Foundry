@@ -32,7 +32,7 @@ final class OpenAIClient
     }
 
     /**
-     * Stream a response from OpenAI.
+     * Stream a normal text response.
      *
      * @param list<array{
      *     role: string,
@@ -51,30 +51,16 @@ final class OpenAIClient
             'instructions' => $instructions,
             'input' => $input,
             'stream' => true,
-
-            /*
-             * Sonic Foundry persists its own conversation history.
-             * We do not require OpenAI-side response storage here.
-             */
             'store' => false,
         ];
 
-        $encodedPayload = json_encode(
-            $payload,
-            JSON_THROW_ON_ERROR
-            | JSON_UNESCAPED_SLASHES
-            | JSON_UNESCAPED_UNICODE
+        $encodedPayload = $this->encodePayload(
+            $payload
         );
 
-        $curl = curl_init(
-            self::RESPONSES_ENDPOINT
+        $curl = $this->initializeCurl(
+            accept: 'text/event-stream'
         );
-
-        if ($curl === false) {
-            throw new \RuntimeException(
-                'Unable to initialize the OpenAI request.'
-            );
-        }
 
         $sseBuffer = '';
         $completeText = '';
@@ -83,24 +69,8 @@ final class OpenAIClient
         curl_setopt_array(
             $curl,
             [
-                CURLOPT_POST => true,
-
-                CURLOPT_HTTPHEADER => [
-                    'Authorization: Bearer '
-                        . $this->apiKey,
-
-                    'Content-Type: application/json',
-
-                    'Accept: text/event-stream',
-                ],
-
                 CURLOPT_POSTFIELDS => $encodedPayload,
-
-                CURLOPT_HEADER => false,
                 CURLOPT_RETURNTRANSFER => false,
-
-                CURLOPT_CONNECTTIMEOUT => 20,
-                CURLOPT_TIMEOUT => 240,
 
                 CURLOPT_WRITEFUNCTION => function (
                     mixed $handle,
@@ -111,10 +81,6 @@ final class OpenAIClient
                     &$streamError,
                     $onTextDelta,
                 ): int {
-                    /*
-                     * Normalize CRLF so SSE event boundaries are
-                     * consistently represented as two newlines.
-                     */
                     $sseBuffer .= str_replace(
                         "\r\n",
                         "\n",
@@ -122,7 +88,7 @@ final class OpenAIClient
                     );
 
                     while (
-                        ($eventBoundary = strpos(
+                        ($boundary = strpos(
                             $sseBuffer,
                             "\n\n"
                         )) !== false
@@ -130,12 +96,12 @@ final class OpenAIClient
                         $eventBlock = substr(
                             $sseBuffer,
                             0,
-                            $eventBoundary
+                            $boundary
                         );
 
                         $sseBuffer = substr(
                             $sseBuffer,
-                            $eventBoundary + 2
+                            $boundary + 2
                         );
 
                         $this->processEventBlock(
@@ -162,10 +128,6 @@ final class OpenAIClient
 
         curl_close($curl);
 
-        /*
-         * Process a final event if the connection ended without an
-         * additional blank line.
-         */
         if (trim($sseBuffer) !== '') {
             $this->processEventBlock(
                 eventBlock: trim($sseBuffer),
@@ -209,8 +171,271 @@ final class OpenAIClient
     }
 
     /**
-     * Process one OpenAI server-sent event.
+     * Request a strict structured response.
      *
+     * @param list<array{
+     *     role: string,
+     *     content: string
+     * }> $input
+     *
+     * @param array<string, mixed> $schema
+     *
+     * @return array<string, mixed>
+     */
+    public function structuredResponse(
+        string $instructions,
+        array $input,
+        string $schemaName,
+        array $schema,
+    ): array {
+        if (
+            !preg_match(
+                '/^[A-Za-z0-9_-]+$/',
+                $schemaName
+            )
+        ) {
+            throw new \InvalidArgumentException(
+                'Structured-output schema name is invalid.'
+            );
+        }
+
+        $payload = [
+            'model' => $this->model,
+            'instructions' => $instructions,
+            'input' => $input,
+            'store' => false,
+
+            'text' => [
+                'format' => [
+                    'type' => 'json_schema',
+                    'name' => $schemaName,
+                    'strict' => true,
+                    'schema' => $schema,
+                ],
+            ],
+        ];
+
+        $curl = $this->initializeCurl(
+            accept: 'application/json'
+        );
+
+        curl_setopt_array(
+            $curl,
+            [
+                CURLOPT_POSTFIELDS =>
+                    $this->encodePayload($payload),
+
+                CURLOPT_RETURNTRANSFER => true,
+            ]
+        );
+
+        $rawResponse = curl_exec($curl);
+
+        $curlError = curl_error($curl);
+
+        $statusCode = (int) curl_getinfo(
+            $curl,
+            CURLINFO_RESPONSE_CODE
+        );
+
+        curl_close($curl);
+
+        if ($rawResponse === false) {
+            throw new \RuntimeException(
+                $curlError !== ''
+                    ? 'OpenAI request failed: ' . $curlError
+                    : 'The OpenAI request failed.'
+            );
+        }
+
+        try {
+            $response = json_decode(
+                $rawResponse,
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        } catch (\JsonException $error) {
+            throw new \RuntimeException(
+                'OpenAI returned unreadable JSON.',
+                previous: $error
+            );
+        }
+
+        if (!is_array($response)) {
+            throw new \RuntimeException(
+                'OpenAI returned an invalid response.'
+            );
+        }
+
+        if ($statusCode < 200 || $statusCode >= 300) {
+            $apiMessage =
+                $response['error']['message']
+                ?? null;
+
+            throw new \RuntimeException(
+                is_string($apiMessage)
+                    ? 'OpenAI request failed: ' . $apiMessage
+                    : (
+                        'OpenAI returned HTTP status '
+                        . $statusCode
+                        . '.'
+                    )
+            );
+        }
+
+        $outputText = $this->extractOutputText(
+            $response
+        );
+
+        try {
+            $structuredData = json_decode(
+                $outputText,
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+        } catch (\JsonException $error) {
+            throw new \RuntimeException(
+                'OpenAI returned invalid structured output.',
+                previous: $error
+            );
+        }
+
+        if (!is_array($structuredData)) {
+            throw new \RuntimeException(
+                'OpenAI structured output was not an object.'
+            );
+        }
+
+        return $structuredData;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function encodePayload(
+        array $payload,
+    ): string {
+        return json_encode(
+            $payload,
+            JSON_THROW_ON_ERROR
+            | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+        );
+    }
+
+    /**
+     * @return \CurlHandle
+     */
+    private function initializeCurl(
+        string $accept,
+    ): \CurlHandle {
+        $curl = curl_init(
+            self::RESPONSES_ENDPOINT
+        );
+
+        if ($curl === false) {
+            throw new \RuntimeException(
+                'Unable to initialize the OpenAI request.'
+            );
+        }
+
+        curl_setopt_array(
+            $curl,
+            [
+                CURLOPT_POST => true,
+
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer '
+                        . $this->apiKey,
+
+                    'Content-Type: application/json',
+
+                    'Accept: ' . $accept,
+                ],
+
+                CURLOPT_HEADER => false,
+                CURLOPT_CONNECTTIMEOUT => 20,
+                CURLOPT_TIMEOUT => 240,
+            ]
+        );
+
+        return $curl;
+    }
+
+    /**
+     * @param array<string, mixed> $response
+     */
+    private function extractOutputText(
+        array $response,
+    ): string {
+        $segments = [];
+
+        foreach (
+            $response['output'] ?? []
+            as $outputItem
+        ) {
+            if (!is_array($outputItem)) {
+                continue;
+            }
+
+            foreach (
+                $outputItem['content'] ?? []
+                as $contentItem
+            ) {
+                if (!is_array($contentItem)) {
+                    continue;
+                }
+
+                if (
+                    ($contentItem['type'] ?? null)
+                    === 'refusal'
+                ) {
+                    $refusal =
+                        $contentItem['refusal']
+                        ?? 'The model refused the request.';
+
+                    throw new \RuntimeException(
+                        is_string($refusal)
+                            ? $refusal
+                            : 'The model refused the request.'
+                    );
+                }
+
+                if (
+                    ($contentItem['type'] ?? null)
+                    !== 'output_text'
+                ) {
+                    continue;
+                }
+
+                $text = $contentItem['text']
+                    ?? null;
+
+                if (
+                    is_string($text)
+                    && trim($text) !== ''
+                ) {
+                    $segments[] = $text;
+                }
+            }
+        }
+
+        $outputText = trim(
+            implode('', $segments)
+        );
+
+        if ($outputText === '') {
+            throw new \RuntimeException(
+                'OpenAI returned no output text.'
+            );
+        }
+
+        return $outputText;
+    }
+
+    /**
      * @param callable(string): void $onTextDelta
      */
     private function processEventBlock(
@@ -237,9 +462,6 @@ final class OpenAIClient
 
         foreach ($lines as $line) {
             if (str_starts_with($line, ':')) {
-                /*
-                 * SSE comment or keep-alive.
-                 */
                 continue;
             }
 
@@ -279,10 +501,6 @@ final class OpenAIClient
                 JSON_THROW_ON_ERROR
             );
         } catch (\JsonException) {
-            /*
-             * Ignore malformed or non-JSON SSE events rather than
-             * corrupting the completed response.
-             */
             return;
         }
 
@@ -336,12 +554,16 @@ final class OpenAIClient
 
         if ($eventType === 'response.incomplete') {
             $reason =
-                $event['response']['incomplete_details']['reason']
+                $event['response']
+                    ['incomplete_details']
+                    ['reason']
                 ?? null;
 
             $streamError = is_string($reason)
-                ? 'The OpenAI response was incomplete: '
+                ? (
+                    'The OpenAI response was incomplete: '
                     . $reason
+                )
                 : 'The OpenAI response was incomplete.';
         }
     }

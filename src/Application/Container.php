@@ -17,6 +17,9 @@ use SonicFoundry\Conversation\ConversationRepository;
 use SonicFoundry\Conversation\ConversationService;
 use SonicFoundry\Database\Connection;
 use SonicFoundry\Forge\CreativePartnerService;
+use SonicFoundry\Memory\PillarMemoryRepository;
+use SonicFoundry\Memory\PillarMemoryService;
+use SonicFoundry\Story\StoryMemoryExtractor;
 use SonicFoundry\User\UserRepository;
 use SonicFoundry\Work\WorkRepository;
 use SonicFoundry\Work\WorkService;
@@ -45,6 +48,10 @@ final class Container
 
     private ?ConversationService $conversationService = null;
 
+    private ?PillarMemoryRepository $pillarMemoryRepository = null;
+
+    private ?PillarMemoryService $pillarMemoryService = null;
+
     private ?PromptLoader $promptLoader = null;
 
     private ?PromptAssembler $promptAssembler = null;
@@ -52,6 +59,8 @@ final class Container
     private ?OpenAIClient $openAIClient = null;
 
     private ?CreativePartnerService $creativePartnerService = null;
+
+    private ?StoryMemoryExtractor $storyMemoryExtractor = null;
 
     public function database(): PDO
     {
@@ -68,10 +77,9 @@ final class Container
             !$this->userRepository
             instanceof UserRepository
         ) {
-            $this->userRepository =
-                new UserRepository(
-                    $this->database()
-                );
+            $this->userRepository = new UserRepository(
+                $this->database()
+            );
         }
 
         return $this->userRepository;
@@ -238,6 +246,37 @@ final class Container
         return $this->conversationService;
     }
 
+    public function memories(): PillarMemoryRepository
+    {
+        if (
+            !$this->pillarMemoryRepository
+            instanceof PillarMemoryRepository
+        ) {
+            $this->pillarMemoryRepository =
+                new PillarMemoryRepository(
+                    $this->database()
+                );
+        }
+
+        return $this->pillarMemoryRepository;
+    }
+
+    public function memoryService(): PillarMemoryService
+    {
+        if (
+            !$this->pillarMemoryService
+            instanceof PillarMemoryService
+        ) {
+            $this->pillarMemoryService =
+                new PillarMemoryService(
+                    memories: $this->memories(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->pillarMemoryService;
+    }
+
     public function promptLoader(): PromptLoader
     {
         if (
@@ -319,20 +358,31 @@ final class Container
         ) {
             $this->creativePartnerService =
                 new CreativePartnerService(
-                    openAI:
-                        $this->openAI(),
-
-                    prompts:
-                        $this->prompts(),
-
-                    messages:
-                        $this->conversations(),
-
-                    works:
-                        $this->workService(),
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    messages: $this->conversations(),
+                    works: $this->workService(),
                 );
         }
 
         return $this->creativePartnerService;
+    }
+
+    public function storyMemoryExtractor(): StoryMemoryExtractor
+    {
+        if (
+            !$this->storyMemoryExtractor
+            instanceof StoryMemoryExtractor
+        ) {
+            $this->storyMemoryExtractor =
+                new StoryMemoryExtractor(
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    messages: $this->conversations(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->storyMemoryExtractor;
     }
 }

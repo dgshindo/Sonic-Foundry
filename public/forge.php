@@ -801,7 +801,7 @@ $workType = $work->typeLabel();
                     <textarea
                         id="forge_message"
                         name="message"
-                        rows="4"
+                        rows="2"
                         maxlength="6000"
                         placeholder="Tell the Creative Partner what is behind this Work..."
                         required
