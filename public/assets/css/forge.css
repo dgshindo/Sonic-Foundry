@@ -1249,3 +1249,168 @@ a.forge-pillar-link:hover {
         }
     }
 }
+
+/*
+|--------------------------------------------------------------------------
+| Live Creative Memory
+|--------------------------------------------------------------------------
+*/
+
+.forge-memory__header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+}
+
+.forge-memory__status {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0.25rem var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-round);
+    font-size: var(--font-size-xs);
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.forge-memory__status--empty {
+    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.forge-memory__status--proposed {
+    color: var(--color-warning);
+    background: var(--color-warning-background);
+    border-color: rgba(232, 184, 94, 0.3);
+}
+
+.forge-memory__status--confirmed {
+    color: var(--color-success, #9ed59e);
+    background: rgba(86, 168, 86, 0.1);
+    border-color: rgba(86, 168, 86, 0.32);
+}
+
+.forge-memory__value {
+    padding: var(--space-4);
+    background: rgba(255, 255, 255, 0.018);
+    border: 1px solid var(--color-border-muted);
+    border-radius: var(--radius-md);
+}
+
+.forge-memory__value p {
+    margin: 0;
+    color: var(--color-text-soft);
+    font-size: var(--font-size-sm);
+    line-height: 1.65;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.forge-memory-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.forge-memory-tags li {
+    padding: 0.35rem 0.65rem;
+    color: var(--color-gold);
+    background: rgba(213, 170, 93, 0.07);
+    border: 1px solid rgba(213, 170, 93, 0.22);
+    border-radius: var(--radius-round);
+    font-size: var(--font-size-xs);
+    line-height: 1.3;
+}
+
+.forge-memory__confirmation {
+    display: grid;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    background:
+        linear-gradient(
+            145deg,
+            rgba(232, 184, 94, 0.08),
+            rgba(255, 255, 255, 0.012)
+        ),
+        var(--color-panel);
+    border: 1px solid rgba(232, 184, 94, 0.28);
+    border-radius: var(--radius-md);
+}
+
+.forge-memory__confirmation p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+}
+
+.forge-memory__confirmation .button {
+    width: 100%;
+}
+
+.forge-memory__feedback {
+    margin-top: var(--space-5);
+    padding: var(--space-4);
+    color: var(--color-success, #9ed59e);
+    background: rgba(86, 168, 86, 0.09);
+    border: 1px solid rgba(86, 168, 86, 0.28);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+}
+
+.forge-memory__feedback--error {
+    color: var(--color-error);
+    background: rgba(193, 71, 71, 0.09);
+    border-color: rgba(193, 71, 71, 0.28);
+}
+
+.forge-memory__footer {
+    color: var(--color-text-muted);
+    background: rgba(255, 255, 255, 0.015);
+    border-color: var(--color-border-muted);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Streaming Creative Partner State
+|--------------------------------------------------------------------------
+*/
+
+.forge-message--streaming {
+    position: relative;
+}
+
+.forge-message--streaming::after {
+    display: inline-block;
+    width: 0.55rem;
+    height: 1rem;
+    margin-left: 0.2rem;
+    content: "";
+    vertical-align: -0.15rem;
+    background: var(--color-ember-bright);
+    border-radius: 1px;
+    animation: forge-stream-cursor 0.85s steps(1) infinite;
+}
+
+@keyframes forge-stream-cursor {
+    0%,
+    45% {
+        opacity: 1;
+    }
+
+    46%,
+    100% {
+        opacity: 0;
+    }
+}

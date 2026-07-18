@@ -190,6 +190,34 @@ try {
 
 /*
 |--------------------------------------------------------------------------
+| Load persisted Creative Memory
+|--------------------------------------------------------------------------
+*/
+
+try {
+    $pillarMemory = $container
+        ->memoryService()
+        ->memoryForWork(
+            user: $authenticatedUser,
+            workId: $work->id(),
+            pillarValue: $requestedPillar,
+        );
+
+    $memoryView = $container
+        ->memoryPresenter()
+        ->present($pillarMemory);
+} catch (\DomainException $error) {
+    Session::flash(
+        'work_error',
+        $error->getMessage()
+    );
+
+    header('Location: /workspace.php');
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
 | View data
 |--------------------------------------------------------------------------
 */
@@ -835,100 +863,322 @@ $workType = $work->typeLabel();
             <aside
                 class="forge-memory"
                 id="forge-memory"
+                data-memory-status="<?= htmlspecialchars(
+                    (string) $memoryView['status']['value'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>"
             >
                 <header class="forge-memory__header">
-                    <p class="eyebrow">
-                        Creative Memory
-                    </p>
+                    <div class="forge-memory__header-row">
+                        <div>
+                            <p class="eyebrow">
+                                Creative Memory
+                            </p>
 
-                    <h2>
-                        What the Forge understands
-                    </h2>
+                            <h2>
+                                What the Forge understands
+                            </h2>
+                        </div>
+
+                        <span
+                            class="
+                                forge-memory__status
+                                forge-memory__status--<?= htmlspecialchars(
+                                    (string) $memoryView['status']['value'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            "
+                            id="forge-memory-status"
+                        >
+                            <?= htmlspecialchars(
+                                (string) $memoryView['status']['label'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </span>
+                    </div>
 
                     <p>
-                        Confirmed decisions will appear here.
-                        Possibilities discussed in conversation remain
-                        separate until approved.
+                        Conversation explores possibilities.
+                        Creative Memory records the understanding
+                        you have approved.
                     </p>
                 </header>
 
-                <section class="forge-memory__section">
-                    <h3>
-                        Work
-                    </h3>
+                <div
+                    class="forge-memory__content"
+                    id="forge-memory-content"
+                >
+                    <section class="forge-memory__section">
+                        <h3>
+                            Work
+                        </h3>
 
-                    <dl class="forge-memory-list">
-                        <div>
-                            <dt>
-                                Title
-                            </dt>
+                        <dl class="forge-memory-list">
+                            <div>
+                                <dt>
+                                    Title
+                                </dt>
 
-                            <dd>
+                                <dd>
+                                    <?= htmlspecialchars(
+                                        $workTitle,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </dd>
+                            </div>
+
+                            <div>
+                                <dt>
+                                    Type
+                                </dt>
+
+                                <dd>
+                                    <?= htmlspecialchars(
+                                        $workType,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </dd>
+                            </div>
+                        </dl>
+                    </section>
+
+                    <section class="forge-memory__section">
+                        <h3>
+                            Story Summary
+                        </h3>
+
+                        <div
+                            class="<?= $memoryView['summary']['hasValue']
+                                ? 'forge-memory__value'
+                                : 'forge-memory-empty' ?>"
+                            data-memory-field="summary"
+                        >
+                            <p>
+                                <?= nl2br(
+                                    htmlspecialchars(
+                                        (string) $memoryView['summary']['display'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    )
+                                ) ?>
+                            </p>
+                        </div>
+                    </section>
+
+                    <section class="forge-memory__section">
+                        <h3>
+                            Themes
+                        </h3>
+
+                        <div data-memory-field="themes">
+                            <?php if ($memoryView['themes']['hasValues']): ?>
+                                <ul class="forge-memory-tags">
+                                    <?php foreach (
+                                        $memoryView['themes']['values']
+                                        as $theme
+                                    ): ?>
+                                        <li>
+                                            <?= htmlspecialchars(
+                                                (string) $theme,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php else: ?>
+                                <div class="forge-memory-empty">
+                                    <p>
+                                        <?= htmlspecialchars(
+                                            (string) $memoryView['themes']['display'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </section>
+
+                    <section class="forge-memory__section">
+                        <h3>
+                            Perspective
+                        </h3>
+
+                        <div
+                            class="<?= $memoryView['perspective']['hasValue']
+                                ? 'forge-memory__value'
+                                : 'forge-memory-empty' ?>"
+                            data-memory-field="perspective"
+                        >
+                            <p>
                                 <?= htmlspecialchars(
-                                    $workTitle,
+                                    (string) $memoryView['perspective']['display'],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
-                            </dd>
+                            </p>
                         </div>
+                    </section>
 
-                        <div>
-                            <dt>
-                                Type
-                            </dt>
+                    <section class="forge-memory__section">
+                        <h3>
+                            Core Tension
+                        </h3>
 
-                            <dd>
-                                <?= htmlspecialchars(
-                                    $workType,
-                                    ENT_QUOTES,
-                                    'UTF-8'
+                        <div
+                            class="<?= $memoryView['coreTension']['hasValue']
+                                ? 'forge-memory__value'
+                                : 'forge-memory-empty' ?>"
+                            data-memory-field="coreTension"
+                        >
+                            <p>
+                                <?= nl2br(
+                                    htmlspecialchars(
+                                        (string) $memoryView['coreTension']['display'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    )
                                 ) ?>
-                            </dd>
+                            </p>
                         </div>
-                    </dl>
-                </section>
+                    </section>
 
-                <section class="forge-memory__section">
-                    <h3>
-                        Story Summary
-                    </h3>
+                    <section class="forge-memory__section">
+                        <h3>
+                            Key Subjects
+                        </h3>
 
-                    <div class="forge-memory-empty">
+                        <div data-memory-field="keySubjects">
+                            <?php if ($memoryView['keySubjects']['hasValues']): ?>
+                                <ul class="forge-memory-tags">
+                                    <?php foreach (
+                                        $memoryView['keySubjects']['values']
+                                        as $subject
+                                    ): ?>
+                                        <li>
+                                            <?= htmlspecialchars(
+                                                (string) $subject,
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php else: ?>
+                                <div class="forge-memory-empty">
+                                    <p>
+                                        <?= htmlspecialchars(
+                                            (string) $memoryView['keySubjects']['display'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </section>
+
+                    <section class="forge-memory__section">
+                        <h3>
+                            Listener Takeaway
+                        </h3>
+
+                        <div
+                            class="<?= $memoryView['listenerTakeaway']['hasValue']
+                                ? 'forge-memory__value'
+                                : 'forge-memory-empty' ?>"
+                            data-memory-field="listenerTakeaway"
+                        >
+                            <p>
+                                <?= nl2br(
+                                    htmlspecialchars(
+                                        (string) $memoryView['listenerTakeaway']['display'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    )
+                                ) ?>
+                            </p>
+                        </div>
+                    </section>
+                </div>
+
+                <div
+                    class="forge-memory__feedback"
+                    id="forge-memory-feedback"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+                ></div>
+
+                <?php if ($memoryView['canConfirm']): ?>
+                    <form
+                        class="forge-memory__confirmation"
+                        id="forge-memory-confirm-form"
+                        method="post"
+                        action="/forge/memory/confirm.php"
+                    >
+                        <input
+                            type="hidden"
+                            name="csrf_token"
+                            value="<?= htmlspecialchars(
+                                Session::csrfToken(),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="work_id"
+                            value="<?= $work->id() ?>"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="pillar"
+                            value="<?= htmlspecialchars(
+                                $requestedPillar,
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                        >
+
                         <p>
-                            No Story summary has been confirmed yet.
+                            This is the Forge's proposed understanding.
+                            Confirm it only when it accurately reflects
+                            the Work.
                         </p>
-                    </div>
-                </section>
 
-                <section class="forge-memory__section">
-                    <h3>
-                        Emerging Themes
-                    </h3>
-
-                    <div class="forge-memory-empty">
-                        <p>
-                            Themes will appear after they are discussed
-                            and approved.
-                        </p>
-                    </div>
-                </section>
-
-                <section class="forge-memory__section">
-                    <h3>
-                        Perspective
-                    </h3>
-
-                    <div class="forge-memory-empty">
-                        <p>
-                            The narrative perspective has not yet been
-                            established.
-                        </p>
-                    </div>
-                </section>
+                        <button
+                            class="button button--primary"
+                            id="forge-memory-confirm-button"
+                            type="submit"
+                        >
+                            Confirm Understanding
+                        </button>
+                    </form>
+                <?php endif; ?>
 
                 <footer class="forge-memory__footer">
-                    <span>
-                        Story is not yet complete.
+                    <span id="forge-memory-meta">
+                        <?php if ($memoryView['exists']): ?>
+                            Revision
+                            <?= (int) $memoryView['revision'] ?>
+                            · Updated
+                            <?= htmlspecialchars(
+                                (string) $memoryView['updatedAt']['display'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        <?php else: ?>
+                            Story understanding has not yet been proposed.
+                        <?php endif; ?>
                     </span>
                 </footer>
             </aside>

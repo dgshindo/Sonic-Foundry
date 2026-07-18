@@ -17,6 +17,7 @@ use SonicFoundry\Conversation\ConversationRepository;
 use SonicFoundry\Conversation\ConversationService;
 use SonicFoundry\Database\Connection;
 use SonicFoundry\Forge\CreativePartnerService;
+use SonicFoundry\Memory\MemoryPresenter;
 use SonicFoundry\Memory\PillarMemoryRepository;
 use SonicFoundry\Memory\PillarMemoryService;
 use SonicFoundry\Story\StoryMemoryExtractor;
@@ -52,6 +53,8 @@ final class Container
 
     private ?PillarMemoryService $pillarMemoryService = null;
 
+    private ?MemoryPresenter $memoryPresenter = null;
+
     private ?PromptLoader $promptLoader = null;
 
     private ?PromptAssembler $promptAssembler = null;
@@ -62,6 +65,12 @@ final class Container
 
     private ?StoryMemoryExtractor $storyMemoryExtractor = null;
 
+    /*
+    |--------------------------------------------------------------------------
+    | Database
+    |--------------------------------------------------------------------------
+    */
+
     public function database(): PDO
     {
         if (!$this->database instanceof PDO) {
@@ -71,15 +80,22 @@ final class Container
         return $this->database;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Users and Authentication
+    |--------------------------------------------------------------------------
+    */
+
     public function users(): UserRepository
     {
         if (
             !$this->userRepository
             instanceof UserRepository
         ) {
-            $this->userRepository = new UserRepository(
-                $this->database()
-            );
+            $this->userRepository =
+                new UserRepository(
+                    $this->database()
+                );
         }
 
         return $this->userRepository;
@@ -127,6 +143,12 @@ final class Container
 
         return $this->passwordLoginService;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google Authentication
+    |--------------------------------------------------------------------------
+    */
 
     public function googleAuthenticator(): GoogleAuthenticator
     {
@@ -182,6 +204,12 @@ final class Container
         return $this->googleLoginService;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Works
+    |--------------------------------------------------------------------------
+    */
+
     public function works(): WorkRepository
     {
         if (
@@ -211,6 +239,12 @@ final class Container
 
         return $this->workService;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conversations
+    |--------------------------------------------------------------------------
+    */
 
     public function conversations(): ConversationRepository
     {
@@ -246,6 +280,12 @@ final class Container
         return $this->conversationService;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Memory Engine
+    |--------------------------------------------------------------------------
+    */
+
     public function memories(): PillarMemoryRepository
     {
         if (
@@ -269,13 +309,35 @@ final class Container
         ) {
             $this->pillarMemoryService =
                 new PillarMemoryService(
-                    memories: $this->memories(),
-                    works: $this->workService(),
+                    memories:
+                        $this->memories(),
+
+                    works:
+                        $this->workService(),
                 );
         }
 
         return $this->pillarMemoryService;
     }
+
+    public function memoryPresenter(): MemoryPresenter
+    {
+        if (
+            !$this->memoryPresenter
+            instanceof MemoryPresenter
+        ) {
+            $this->memoryPresenter =
+                new MemoryPresenter();
+        }
+
+        return $this->memoryPresenter;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prompt System
+    |--------------------------------------------------------------------------
+    */
 
     public function promptLoader(): PromptLoader
     {
@@ -307,6 +369,12 @@ final class Container
 
         return $this->promptAssembler;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | OpenAI
+    |--------------------------------------------------------------------------
+    */
 
     public function openAI(): OpenAIClient
     {
@@ -350,6 +418,12 @@ final class Container
         return $this->openAIClient;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Creative Partner
+    |--------------------------------------------------------------------------
+    */
+
     public function creativePartner(): CreativePartnerService
     {
         if (
@@ -358,15 +432,28 @@ final class Container
         ) {
             $this->creativePartnerService =
                 new CreativePartnerService(
-                    openAI: $this->openAI(),
-                    prompts: $this->prompts(),
-                    messages: $this->conversations(),
-                    works: $this->workService(),
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    messages:
+                        $this->conversations(),
+
+                    works:
+                        $this->workService(),
                 );
         }
 
         return $this->creativePartnerService;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Story Specialist
+    |--------------------------------------------------------------------------
+    */
 
     public function storyMemoryExtractor(): StoryMemoryExtractor
     {
@@ -376,10 +463,17 @@ final class Container
         ) {
             $this->storyMemoryExtractor =
                 new StoryMemoryExtractor(
-                    openAI: $this->openAI(),
-                    prompts: $this->prompts(),
-                    messages: $this->conversations(),
-                    works: $this->workService(),
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    messages:
+                        $this->conversations(),
+
+                    works:
+                        $this->workService(),
                 );
         }
 

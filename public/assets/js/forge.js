@@ -31,6 +31,36 @@
         'forge-error'
     );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Creative Memory DOM
+        |--------------------------------------------------------------------------
+        */
+
+        const memoryPanel = document.getElementById(
+            'forge-memory'
+        );
+
+        const memoryStatus = document.getElementById(
+            'forge-memory-status'
+        );
+
+        const memoryFeedback = document.getElementById(
+            'forge-memory-feedback'
+        );
+
+        const memoryConfirmForm = document.getElementById(
+            'forge-memory-confirm-form'
+        );
+
+        const memoryConfirmButton = document.getElementById(
+            'forge-memory-confirm-button'
+        );
+
+        const memoryMeta = document.getElementById(
+            'forge-memory-meta'
+        );
+
     if (
         !form
         || !history
@@ -877,6 +907,323 @@
         }
     );
 
+        /*
+        |--------------------------------------------------------------------------
+        | Creative Memory confirmation
+        |--------------------------------------------------------------------------
+        */
+
+        const memoryField = (name) => {
+            return document.querySelector(
+                `[data-memory-field="${name}"]`
+            );
+        };
+
+        const replaceMemoryText = (
+            fieldName,
+            field,
+            fallback
+        ) => {
+            const container = memoryField(
+                fieldName
+            );
+
+            if (!container) {
+                return;
+            }
+
+            container.replaceChildren();
+
+            const paragraph = document.createElement(
+                'p'
+            );
+
+            paragraph.textContent =
+                field?.display
+                ?? fallback;
+
+            container.append(
+                paragraph
+            );
+
+            container.className = field?.hasValue
+                ? 'forge-memory__value'
+                : 'forge-memory-empty';
+        };
+
+        const replaceMemoryTags = (
+            fieldName,
+            field,
+            fallback
+        ) => {
+            const container = memoryField(
+                fieldName
+            );
+
+            if (!container) {
+                return;
+            }
+
+            container.replaceChildren();
+
+            const values = Array.isArray(
+                field?.values
+            )
+                ? field.values
+                : [];
+
+            if (values.length === 0) {
+                const empty = document.createElement(
+                    'div'
+                );
+
+                empty.className =
+                    'forge-memory-empty';
+
+                const paragraph =
+                    document.createElement('p');
+
+                paragraph.textContent =
+                    field?.display
+                    ?? fallback;
+
+                empty.append(
+                    paragraph
+                );
+
+                container.append(
+                    empty
+                );
+
+                return;
+            }
+
+            const list = document.createElement(
+                'ul'
+            );
+
+            list.className =
+                'forge-memory-tags';
+
+            for (const value of values) {
+                const item = document.createElement(
+                    'li'
+                );
+
+                item.textContent =
+                    String(value);
+
+                list.append(
+                    item
+                );
+            }
+
+            container.append(
+                list
+            );
+        };
+
+        const refreshMemoryPanel = (
+            memory
+        ) => {
+            if (
+                !memoryPanel
+                || !memoryStatus
+                || !memory
+            ) {
+                return;
+            }
+
+            memoryPanel.dataset.memoryStatus =
+                memory.status.value;
+
+            memoryStatus.className =
+                'forge-memory__status '
+                + (
+                    'forge-memory__status--'
+                    + memory.status.value
+                );
+
+            memoryStatus.textContent =
+                memory.status.label;
+
+            replaceMemoryText(
+                'summary',
+                memory.summary,
+                'No summary has been established.'
+            );
+
+            replaceMemoryTags(
+                'themes',
+                memory.themes,
+                'No themes have been established.'
+            );
+
+            replaceMemoryText(
+                'perspective',
+                memory.perspective,
+                'Perspective has not been established.'
+            );
+
+            replaceMemoryText(
+                'coreTension',
+                memory.coreTension,
+                'Core tension has not been established.'
+            );
+
+            replaceMemoryTags(
+                'keySubjects',
+                memory.keySubjects,
+                'No key subjects have been established.'
+            );
+
+            replaceMemoryText(
+                'listenerTakeaway',
+                memory.listenerTakeaway,
+                'Listener takeaway has not been established.'
+            );
+
+            if (memoryMeta) {
+                memoryMeta.textContent =
+                    `Revision ${memory.revision} · Updated `
+                    + memory.updatedAt.display;
+            }
+
+            if (memoryConfirmForm) {
+                memoryConfirmForm.remove();
+            }
+
+            if (memoryFeedback) {
+                memoryFeedback.classList.remove(
+                    'forge-memory__feedback--error'
+                );
+
+                memoryFeedback.textContent =
+                    'Creative Memory confirmed.';
+
+                memoryFeedback.hidden = false;
+            }
+        };
+
+        const confirmMemory = async () => {
+            if (
+                !memoryConfirmForm
+                || !memoryConfirmButton
+            ) {
+                return;
+            }
+
+            memoryConfirmButton.disabled = true;
+
+            memoryConfirmButton.textContent =
+                'Confirming...';
+
+            if (memoryFeedback) {
+                memoryFeedback.hidden = true;
+                memoryFeedback.textContent = '';
+
+                memoryFeedback.classList.remove(
+                    'forge-memory__feedback--error'
+                );
+            }
+
+            try {
+                const response = await fetch(
+                    memoryConfirmForm.action,
+                    {
+                        method: 'POST',
+
+                        body: new FormData(
+                            memoryConfirmForm
+                        ),
+
+                        headers: {
+                            'Accept':
+                                'application/json',
+
+                            'X-Requested-With':
+                                'XMLHttpRequest'
+                        },
+
+                        credentials:
+                            'same-origin',
+
+                        cache:
+                            'no-store'
+                    }
+                );
+
+                const payload =
+                    await readJsonResponse(
+                        response
+                    );
+
+                if (response.status === 401) {
+                    window.location.assign(
+                        '/login.php'
+                    );
+
+                    return;
+                }
+
+                if (
+                    !response.ok
+                    || payload.success !== true
+                    || !payload.data?.memory
+                ) {
+                    throw new Error(
+                        payload.error?.message
+                        ?? (
+                            'Creative Memory could not '
+                            + 'be confirmed.'
+                        )
+                    );
+                }
+
+                refreshMemoryPanel(
+                    payload.data.memory
+                );
+            } catch (error) {
+                if (memoryFeedback) {
+                    memoryFeedback.textContent =
+                        error instanceof Error
+                            ? error.message
+                            : (
+                                'Creative Memory could '
+                                + 'not be confirmed.'
+                            );
+
+                    memoryFeedback.hidden = false;
+
+                    memoryFeedback.classList.add(
+                        'forge-memory__feedback--error'
+                    );
+                }
+            } finally {
+                if (
+                    memoryConfirmButton
+                    && memoryConfirmButton.isConnected
+                ) {
+                    memoryConfirmButton.disabled =
+                        false;
+
+                    memoryConfirmButton.textContent =
+                        'Confirm Understanding';
+                }
+            }
+        };
+
+        if (memoryConfirmForm) {
+            memoryConfirmForm.addEventListener(
+                'submit',
+                (event) => {
+                    event.preventDefault();
+
+                    void confirmMemory();
+                }
+            );
+        }
+    
     /*
     |--------------------------------------------------------------------------
     | Keyboard shortcut

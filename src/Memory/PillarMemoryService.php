@@ -90,6 +90,12 @@ final class PillarMemoryService
             );
         }
 
+        if ($memory->isConfirmed()) {
+            throw new \DomainException(
+                'This memory has already been confirmed.'
+            );
+        }
+
         if (!$memory->isProposed()) {
             throw new \DomainException(
                 'Only proposed memory may be confirmed.'
