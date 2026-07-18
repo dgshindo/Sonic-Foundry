@@ -443,6 +443,9 @@ final class Container
 
                     works:
                         $this->workService(),
+
+                    memory:
+                        $this->memoryService(),
                 );
         }
 

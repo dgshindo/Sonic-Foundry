@@ -9,6 +9,8 @@ use SonicFoundry\Auth\AuthenticatedUser;
 use SonicFoundry\Conversation\ConversationMessage;
 use SonicFoundry\Conversation\ConversationRepository;
 use SonicFoundry\Conversation\MessageRole;
+use SonicFoundry\Memory\PillarMemory;
+use SonicFoundry\Memory\PillarMemoryService;
 use SonicFoundry\Work\Work;
 use SonicFoundry\Work\WorkPillar;
 use SonicFoundry\Work\WorkService;
@@ -22,6 +24,7 @@ final class CreativePartnerService
         private readonly PromptAssembler $prompts,
         private readonly ConversationRepository $messages,
         private readonly WorkService $works,
+        private readonly PillarMemoryService $memory,
     ) {
     }
 
@@ -73,18 +76,27 @@ final class CreativePartnerService
             );
         }
 
+        $confirmedMemory = $this->confirmedMemory(
+            user: $user,
+            workId: $work->id(),
+            pillar: $pillar,
+        );
+
         $instructions = $this->buildInstructions(
             work: $work,
             pillar: $pillar,
             creatorFirstName: $user->firstName(),
+            confirmedMemory: $confirmedMemory,
         );
 
         $completeResponse =
             $this->openAI->streamResponse(
                 instructions: $instructions,
+
                 input: $this->buildInput(
                     $history
                 ),
+
                 onTextDelta: $onTextDelta,
             );
 
@@ -138,14 +150,22 @@ final class CreativePartnerService
         Work $work,
         WorkPillar $pillar,
         string $creatorFirstName,
+        ?PillarMemory $confirmedMemory,
     ): string {
-        return $this->prompts->assemble(
-            promptPaths: [
-                'core/creative-partner.md',
-                $this->pillarPromptPath(
-                    $pillar
-                ),
-            ],
+        $promptPaths = [
+            'core/creative-partner.md',
+            $this->pillarPromptPath(
+                $pillar
+            ),
+        ];
+
+        if ($confirmedMemory !== null) {
+            $promptPaths[] =
+                'memory/confirmed-context.md';
+        }
+
+        $instructions = $this->prompts->assemble(
+            promptPaths: $promptPaths,
 
             variables: [
                 'creator_first_name' =>
@@ -160,6 +180,82 @@ final class CreativePartnerService
                 'pillar_name' =>
                     $pillar->label(),
             ],
+        );
+
+        if ($confirmedMemory === null) {
+            return $instructions;
+        }
+
+        return $instructions
+            . "\n\n---\n\n"
+            . $this->serializeConfirmedMemory(
+                $confirmedMemory
+            );
+    }
+
+    private function confirmedMemory(
+        AuthenticatedUser $user,
+        int $workId,
+        WorkPillar $pillar,
+    ): ?PillarMemory {
+        $memory = $this->memory->memoryForWork(
+            user: $user,
+            workId: $workId,
+            pillarValue: $pillar->value,
+        );
+
+        if (
+            $memory === null
+            || !$memory->isConfirmed()
+        ) {
+            return null;
+        }
+
+        return $memory;
+    }
+
+    private function serializeConfirmedMemory(
+        PillarMemory $memory,
+    ): string {
+        $payload = [
+            'pillar' => $memory->pillar()->value,
+
+            'status' => $memory->status()->value,
+
+            'revision' => $memory->revision(),
+
+            'summary' => $memory->summary(),
+
+            'perspective' =>
+                $memory->perspective(),
+
+            'core_tension' =>
+                $memory->coreTension(),
+
+            'listener_takeaway' =>
+                $memory->listenerTakeaway(),
+
+            'themes' => $memory->themes(),
+
+            'key_subjects' =>
+                $memory->keySubjects(),
+        ];
+
+        $json = json_encode(
+            $payload,
+            JSON_THROW_ON_ERROR
+            | JSON_PRETTY_PRINT
+            | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+        );
+
+        return implode(
+            "\n",
+            [
+                '<confirmed_creative_memory>',
+                $json,
+                '</confirmed_creative_memory>',
+            ]
         );
     }
 
@@ -193,7 +289,7 @@ final class CreativePartnerService
             )
         );
 
-        if (!$pillar) {
+        if ($pillar === null) {
             throw new \RuntimeException(
                 'A valid creative pillar is required.'
             );
@@ -207,9 +303,9 @@ final class CreativePartnerService
         WorkPillar $pillar,
     ): void {
         /*
-         * The Work parameter is intentionally retained.
+         * Work is intentionally retained here.
          * Persistent pillar progress will later determine
-         * availability from the Work.
+         * availability from the Work itself.
          */
 
         if ($pillar !== WorkPillar::Story) {
