@@ -3,36 +3,39 @@ declare(strict_types=1);
 
 namespace SonicFoundry\Application;
 
-use PDO;
-use SonicFoundry\Auth\Auth;
-use SonicFoundry\Database\Connection;
-use SonicFoundry\User\UserRepository;
 use Google\Client as GoogleClient;
+use PDO;
+use SonicFoundry\AI\OpenAIClient;
+use SonicFoundry\AI\PromptAssembler;
+use SonicFoundry\AI\PromptLoader;
+use SonicFoundry\Auth\Auth;
 use SonicFoundry\Auth\GoogleAuthenticator;
 use SonicFoundry\Auth\GoogleLoginService;
 use SonicFoundry\Auth\PasswordLoginService;
 use SonicFoundry\Auth\RegistrationService;
-use SonicFoundry\Work\WorkRepository;
-use SonicFoundry\Work\WorkService;
 use SonicFoundry\Conversation\ConversationRepository;
 use SonicFoundry\Conversation\ConversationService;
-
+use SonicFoundry\Database\Connection;
+use SonicFoundry\Forge\CreativePartnerService;
+use SonicFoundry\User\UserRepository;
+use SonicFoundry\Work\WorkRepository;
+use SonicFoundry\Work\WorkService;
 
 final class Container
 {
-    private ?RegistrationService $registrationService = null;
-    
-    private ?PasswordLoginService $passwordLoginService = null;
-
-    private ?GoogleLoginService $googleLoginService = null;
-
-    private ?GoogleAuthenticator $googleAuthenticator = null;
-
     private ?PDO $database = null;
 
     private ?UserRepository $userRepository = null;
 
     private ?Auth $auth = null;
+
+    private ?RegistrationService $registrationService = null;
+
+    private ?PasswordLoginService $passwordLoginService = null;
+
+    private ?GoogleAuthenticator $googleAuthenticator = null;
+
+    private ?GoogleLoginService $googleLoginService = null;
 
     private ?WorkRepository $workRepository = null;
 
@@ -41,6 +44,14 @@ final class Container
     private ?ConversationRepository $conversationRepository = null;
 
     private ?ConversationService $conversationService = null;
+
+    private ?PromptLoader $promptLoader = null;
+
+    private ?PromptAssembler $promptAssembler = null;
+
+    private ?OpenAIClient $openAIClient = null;
+
+    private ?CreativePartnerService $creativePartnerService = null;
 
     public function database(): PDO
     {
@@ -53,10 +64,14 @@ final class Container
 
     public function users(): UserRepository
     {
-        if (!$this->userRepository instanceof UserRepository) {
-            $this->userRepository = new UserRepository(
-                $this->database()
-            );
+        if (
+            !$this->userRepository
+            instanceof UserRepository
+        ) {
+            $this->userRepository =
+                new UserRepository(
+                    $this->database()
+                );
         }
 
         return $this->userRepository;
@@ -72,44 +87,6 @@ final class Container
 
         return $this->auth;
     }
-
-    public function googleAuthenticator(): GoogleAuthenticator
-    {
-        if (!$this->googleAuthenticator instanceof GoogleAuthenticator) {
-            $clientId = env('GOOGLE_CLIENT_ID');
-
-            if (!$clientId) {
-                throw new \RuntimeException(
-                    'GOOGLE_CLIENT_ID is not configured.'
-                );
-            }
-
-            $googleClient = new GoogleClient([
-                'client_id' => $clientId,
-            ]);
-
-            $this->googleAuthenticator = new GoogleAuthenticator(
-                $googleClient
-            );
-        }
-
-        return $this->googleAuthenticator;
-    }
-
-    public function googleLogin(): GoogleLoginService
-    {
-        if (!$this->googleLoginService instanceof GoogleLoginService) {
-            $this->googleLoginService = new GoogleLoginService(
-                googleAuthenticator: $this->googleAuthenticator(),
-                users: $this->users(),
-                auth: $this->auth(),
-            );
-        }
-
-        return $this->googleLoginService;
-    }
-
-   
 
     public function registration(): RegistrationService
     {
@@ -143,12 +120,70 @@ final class Container
         return $this->passwordLoginService;
     }
 
+    public function googleAuthenticator(): GoogleAuthenticator
+    {
+        if (
+            !$this->googleAuthenticator
+            instanceof GoogleAuthenticator
+        ) {
+            $clientId = \env(
+                'GOOGLE_CLIENT_ID'
+            );
+
+            if (
+                !is_string($clientId)
+                || trim($clientId) === ''
+            ) {
+                throw new \RuntimeException(
+                    'GOOGLE_CLIENT_ID is not configured.'
+                );
+            }
+
+            $googleClient = new GoogleClient([
+                'client_id' => $clientId,
+            ]);
+
+            $this->googleAuthenticator =
+                new GoogleAuthenticator(
+                    $googleClient
+                );
+        }
+
+        return $this->googleAuthenticator;
+    }
+
+    public function googleLogin(): GoogleLoginService
+    {
+        if (
+            !$this->googleLoginService
+            instanceof GoogleLoginService
+        ) {
+            $this->googleLoginService =
+                new GoogleLoginService(
+                    googleAuthenticator:
+                        $this->googleAuthenticator(),
+
+                    users:
+                        $this->users(),
+
+                    auth:
+                        $this->auth(),
+                );
+        }
+
+        return $this->googleLoginService;
+    }
+
     public function works(): WorkRepository
     {
-        if (!$this->workRepository instanceof WorkRepository) {
-            $this->workRepository = new WorkRepository(
-                $this->database()
-            );
+        if (
+            !$this->workRepository
+            instanceof WorkRepository
+        ) {
+            $this->workRepository =
+                new WorkRepository(
+                    $this->database()
+                );
         }
 
         return $this->workRepository;
@@ -156,10 +191,14 @@ final class Container
 
     public function workService(): WorkService
     {
-        if (!$this->workService instanceof WorkService) {
-            $this->workService = new WorkService(
-                $this->works()
-            );
+        if (
+            !$this->workService
+            instanceof WorkService
+        ) {
+            $this->workService =
+                new WorkService(
+                    $this->works()
+                );
         }
 
         return $this->workService;
@@ -188,12 +227,112 @@ final class Container
         ) {
             $this->conversationService =
                 new ConversationService(
-                    messages: $this->conversations(),
-                    works: $this->workService(),
+                    messages:
+                        $this->conversations(),
+
+                    works:
+                        $this->workService(),
                 );
         }
 
         return $this->conversationService;
     }
 
+    public function promptLoader(): PromptLoader
+    {
+        if (
+            !$this->promptLoader
+            instanceof PromptLoader
+        ) {
+            $this->promptLoader =
+                new PromptLoader(
+                    dirname(__DIR__, 2)
+                        . '/prompts'
+                );
+        }
+
+        return $this->promptLoader;
+    }
+
+    public function prompts(): PromptAssembler
+    {
+        if (
+            !$this->promptAssembler
+            instanceof PromptAssembler
+        ) {
+            $this->promptAssembler =
+                new PromptAssembler(
+                    $this->promptLoader()
+                );
+        }
+
+        return $this->promptAssembler;
+    }
+
+    public function openAI(): OpenAIClient
+    {
+        if (
+            !$this->openAIClient
+            instanceof OpenAIClient
+        ) {
+            $apiKey = \env(
+                'OPENAI_API_KEY'
+            );
+
+            $model = \env(
+                'OPENAI_MODEL'
+            );
+
+            if (
+                !is_string($apiKey)
+                || trim($apiKey) === ''
+            ) {
+                throw new \RuntimeException(
+                    'OPENAI_API_KEY is not configured.'
+                );
+            }
+
+            if (
+                !is_string($model)
+                || trim($model) === ''
+            ) {
+                throw new \RuntimeException(
+                    'OPENAI_MODEL is not configured.'
+                );
+            }
+
+            $this->openAIClient =
+                new OpenAIClient(
+                    apiKey: $apiKey,
+                    model: $model,
+                );
+        }
+
+        return $this->openAIClient;
+    }
+
+    public function creativePartner(): CreativePartnerService
+    {
+        if (
+            !$this->creativePartnerService
+            instanceof CreativePartnerService
+        ) {
+            $this->creativePartnerService =
+                new CreativePartnerService(
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    messages:
+                        $this->conversations(),
+
+                    works:
+                        $this->workService(),
+                );
+        }
+
+        return $this->creativePartnerService;
+    }
 }

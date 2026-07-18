@@ -51,11 +51,10 @@ $appName = 'Sonic Foundry';
     <?php if ($isAuthenticated): ?>
         <a
             class="button button--primary"
-            href="/new-project.php"
+            href="/create-work.php"
         >
             Begin New Project
         </a>
-
         <a
             class="button button--secondary"
             href="/workspace.php"
