@@ -1649,3 +1649,127 @@ a.forge-pillar-link:hover {
 .forge-progress__empty p + p {
     margin-top: var(--space-2);
 }
+
+/*
+|--------------------------------------------------------------------------
+| Pillar Workflow Navigation
+|--------------------------------------------------------------------------
+*/
+
+.forge-pillar-link--locked {
+    cursor: not-allowed;
+    opacity: 0.42;
+    pointer-events: none;
+}
+
+.forge-pillar-link--available
+.forge-pillar-link__status {
+    color: var(--color-warning);
+}
+
+.forge-pillar-link--completed {
+    border-color:
+        rgba(86, 168, 86, 0.32);
+}
+
+.forge-pillar-link--completed
+.forge-pillar-link__marker,
+.forge-pillar-link--completed
+.forge-pillar-link__status {
+    color: var(--color-success, #9ed59e);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Workflow Completion
+|--------------------------------------------------------------------------
+*/
+
+.forge-workflow-action {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.forge-workflow-complete {
+    display: grid;
+    gap: var(--space-4);
+
+    padding: var(--space-5);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(86, 168, 86, 0.08),
+            rgba(255, 255, 255, 0.012)
+        ),
+        var(--color-panel);
+
+    border:
+        1px solid
+        rgba(86, 168, 86, 0.28);
+
+    border-radius: var(--radius-md);
+}
+
+.forge-workflow-complete p {
+    margin: 0;
+
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.55;
+}
+
+.forge-workflow-complete .button,
+.forge-workflow-action > .button {
+    width: 100%;
+}
+
+.forge-workflow-action__completed {
+    display: grid;
+    gap: var(--space-2);
+
+    padding: var(--space-4);
+
+    color: var(--color-success, #9ed59e);
+
+    background: rgba(86, 168, 86, 0.09);
+
+    border:
+        1px solid
+        rgba(86, 168, 86, 0.28);
+
+    border-radius: var(--radius-md);
+}
+
+.forge-workflow-action__completed strong {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-lg);
+}
+
+.forge-workflow-action__completed span {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+}
+
+.forge-workflow-feedback {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+
+    color: var(--color-success, #9ed59e);
+    background: rgba(86, 168, 86, 0.09);
+
+    border:
+        1px solid
+        rgba(86, 168, 86, 0.28);
+
+    border-radius: var(--radius-md);
+
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+}
+
+.forge-workflow-feedback--error {
+    color: var(--color-error);
+    background: rgba(193, 71, 71, 0.09);
+    border-color: rgba(193, 71, 71, 0.28);
+}

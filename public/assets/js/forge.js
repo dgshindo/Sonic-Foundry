@@ -1226,6 +1226,335 @@
     
     /*
     |--------------------------------------------------------------------------
+    | Workflow DOM
+    |--------------------------------------------------------------------------
+    */
+
+    const workflowCompleteForm = document.getElementById(
+        'forge-workflow-complete-form'
+    );
+
+    const workflowCompleteButton = document.getElementById(
+        'forge-workflow-complete-button'
+    );
+
+    const workflowAction = document.getElementById(
+        'forge-workflow-action'
+    );
+
+    const workflowFeedback = document.getElementById(
+        'forge-workflow-feedback'
+    );
+
+    const activeWorkflowStatus = document.getElementById(
+        'forge-active-workflow-status'
+    );
+
+        /*
+    |--------------------------------------------------------------------------
+    | Pillar workflow completion
+    |--------------------------------------------------------------------------
+    */
+
+    const workflowLink = (pillar) => {
+        return document.querySelector(
+            `[data-pillar-link][data-pillar="${pillar}"]`
+        );
+    };
+
+    const updateWorkflowNavigation = (
+        workflow
+    ) => {
+        if (!Array.isArray(workflow)) {
+            return;
+        }
+
+        for (const item of workflow) {
+            const link = workflowLink(
+                item.pillar.value
+            );
+
+            if (!link) {
+                continue;
+            }
+
+            link.classList.remove(
+                'forge-pillar-link--locked',
+                'forge-pillar-link--available',
+                'forge-pillar-link--completed'
+            );
+
+            link.classList.add(
+                `forge-pillar-link--${item.status.value}`
+            );
+
+            link.dataset.workflowStatus =
+                item.status.value;
+
+            const marker = link.querySelector(
+                '.forge-pillar-link__marker'
+            );
+
+            const status = link.querySelector(
+                '.forge-pillar-link__status'
+            );
+
+            if (marker) {
+                marker.textContent = item.isCompleted
+                    ? '✓'
+                    : (
+                        link.matches(
+                            '[aria-current="step"]'
+                        )
+                            ? '●'
+                            : '○'
+                    );
+            }
+
+            if (status) {
+                status.textContent =
+                    item.status.label;
+            }
+
+            if (item.isLocked) {
+                link.removeAttribute('href');
+                link.setAttribute(
+                    'aria-disabled',
+                    'true'
+                );
+                link.tabIndex = -1;
+            } else {
+                link.href =
+                    `/forge.php?work=${link.dataset.workId}`
+                    + `&pillar=${encodeURIComponent(
+                        item.pillar.value
+                    )}`;
+
+                link.removeAttribute(
+                    'aria-disabled'
+                );
+
+                link.removeAttribute(
+                    'tabindex'
+                );
+            }
+        }
+    };
+
+    const renderCompletedWorkflow = (
+        completed,
+        workflow
+    ) => {
+        updateWorkflowNavigation(
+            workflow
+        );
+
+        if (activeWorkflowStatus) {
+            activeWorkflowStatus.textContent =
+                completed.status.label;
+        }
+
+        if (workflowAction) {
+            workflowAction.replaceChildren();
+
+            const completedState =
+                document.createElement('div');
+
+            completedState.className =
+                'forge-workflow-action__completed';
+
+            const heading =
+                document.createElement('strong');
+
+            heading.textContent =
+                `${completed.pillar.label} Complete`;
+
+            completedState.append(
+                heading
+            );
+
+            if (completed.completedAt?.display) {
+                const date =
+                    document.createElement('span');
+
+                date.textContent =
+                    `Completed ${completed.completedAt.display}`;
+
+                completedState.append(
+                    date
+                );
+            }
+
+            workflowAction.append(
+                completedState
+            );
+
+            const nextPillar = workflow.find(
+                (item) => item.isAvailable
+                    && item.pillar.value
+                    !== completed.pillar.value
+            );
+
+            if (nextPillar) {
+                const continueLink =
+                    document.createElement('a');
+
+                continueLink.className =
+                    'button button--primary';
+
+                continueLink.id =
+                    'forge-next-pillar-link';
+
+                continueLink.href =
+                    `/forge.php?work=${completed.workId}`
+                    + `&pillar=${encodeURIComponent(
+                        nextPillar.pillar.value
+                    )}`;
+
+                continueLink.textContent =
+                    `Continue to ${nextPillar.pillar.label}`;
+
+                workflowAction.append(
+                    continueLink
+                );
+            }
+        }
+
+        if (workflowFeedback) {
+            workflowFeedback.classList.remove(
+                'forge-workflow-feedback--error'
+            );
+
+            workflowFeedback.textContent =
+                `${completed.pillar.label} is complete. `
+                + 'The next pillar is now available.';
+
+            workflowFeedback.hidden = false;
+        }
+    };
+
+    const completeWorkflow = async () => {
+        if (
+            !workflowCompleteForm
+            || !workflowCompleteButton
+        ) {
+            return;
+        }
+
+        workflowCompleteButton.disabled = true;
+
+        workflowCompleteButton.textContent =
+            'Completing...';
+
+        if (workflowFeedback) {
+            workflowFeedback.hidden = true;
+            workflowFeedback.textContent = '';
+
+            workflowFeedback.classList.remove(
+                'forge-workflow-feedback--error'
+            );
+        }
+
+        try {
+            const response = await fetch(
+                workflowCompleteForm.action,
+                {
+                    method: 'POST',
+
+                    body: new FormData(
+                        workflowCompleteForm
+                    ),
+
+                    headers: {
+                        'Accept':
+                            'application/json',
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    credentials:
+                        'same-origin',
+
+                    cache:
+                        'no-store'
+                }
+            );
+
+            const payload =
+                await readJsonResponse(
+                    response
+                );
+
+            if (response.status === 401) {
+                window.location.assign(
+                    '/login.php'
+                );
+
+                return;
+            }
+
+            if (
+                !response.ok
+                || payload.success !== true
+                || !payload.data?.completed
+                || !Array.isArray(
+                    payload.data.workflow
+                )
+            ) {
+                throw new Error(
+                    payload.error?.message
+                    ?? 'The pillar could not be completed.'
+                );
+            }
+
+            renderCompletedWorkflow(
+                payload.data.completed,
+                payload.data.workflow
+            );
+        } catch (error) {
+            if (workflowFeedback) {
+                workflowFeedback.textContent =
+                    error instanceof Error
+                        ? error.message
+                        : (
+                            'The pillar could not '
+                            + 'be completed.'
+                        );
+
+                workflowFeedback.hidden = false;
+
+                workflowFeedback.classList.add(
+                    'forge-workflow-feedback--error'
+                );
+            }
+        } finally {
+            if (
+                workflowCompleteButton
+                && workflowCompleteButton.isConnected
+            ) {
+                workflowCompleteButton.disabled =
+                    false;
+
+                workflowCompleteButton.textContent =
+                    'Complete Story';
+            }
+        }
+    };
+
+    if (workflowCompleteForm) {
+        workflowCompleteForm.addEventListener(
+            'submit',
+            (event) => {
+                event.preventDefault();
+
+                void completeWorkflow();
+            }
+        );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Keyboard shortcut
     |--------------------------------------------------------------------------
     |

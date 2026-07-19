@@ -33,6 +33,7 @@ use SonicFoundry\Progress\ProgressPresenter;
 
 use SonicFoundry\Workflow\PillarWorkflowRepository;
 use SonicFoundry\Workflow\PillarWorkflowService;
+use SonicFoundry\Workflow\WorkflowPresenter;
 
 final class Container
 {
@@ -85,6 +86,10 @@ final class Container
     private ?PillarWorkflowRepository $pillarWorkflowRepository = null;
 
     private ?PillarWorkflowService $pillarWorkflowService = null;
+
+    private ?WorkflowPresenter $workflowPresenter = null;
+
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -559,6 +564,19 @@ final class Container
         }
 
         return $this->pillarWorkflowService;
+    }
+
+    public function workflowPresenter(): WorkflowPresenter
+    {
+        if (
+            !$this->workflowPresenter
+            instanceof WorkflowPresenter
+        ) {
+            $this->workflowPresenter =
+                new WorkflowPresenter();
+        }
+
+        return $this->workflowPresenter;
     }
 
     /*

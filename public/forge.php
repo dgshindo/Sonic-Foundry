@@ -78,8 +78,6 @@ $pillarConfigurations = [
             . 'What made you feel that it needed to exist?'
         ),
         'guide_role' => 'Story Guide',
-        'status' => 'Beginning',
-        'available' => true,
     ],
 
     'emotion' => [
@@ -94,8 +92,6 @@ $pillarConfigurations = [
             . 'and how should that feeling change before it ends?'
         ),
         'guide_role' => 'Emotion Guide',
-        'status' => 'Locked',
-        'available' => false,
     ],
 
     'identity' => [
@@ -110,8 +106,6 @@ $pillarConfigurations = [
             'What makes this Work unmistakably yours?'
         ),
         'guide_role' => 'Identity Guide',
-        'status' => 'Locked',
-        'available' => false,
     ],
 
     'sound' => [
@@ -127,8 +121,6 @@ $pillarConfigurations = [
             . 'and production choices belong in this Work?'
         ),
         'guide_role' => 'Sound Guide',
-        'status' => 'Locked',
-        'available' => false,
     ],
 
     'impact' => [
@@ -144,10 +136,41 @@ $pillarConfigurations = [
             . 'what do you hope has changed for them?'
         ),
         'guide_role' => 'Impact Guide',
-        'status' => 'Locked',
-        'available' => false,
     ],
 ];
+
+/*
+|--------------------------------------------------------------------------
+| Persistent pillar workflow
+|--------------------------------------------------------------------------
+*/
+
+try {
+    $pillarWorkflow = $container
+        ->workflowService()
+        ->workflowForWork(
+            user: $authenticatedUser,
+            workId: $work->id(),
+        );
+
+    $workflowView = $container
+        ->workflowPresenter()
+        ->present($pillarWorkflow);
+} catch (\DomainException $error) {
+    Session::flash(
+        'work_error',
+        $error->getMessage()
+    );
+
+    header('Location: /workspace.php');
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Requested pillar
+|--------------------------------------------------------------------------
+*/
 
 $requestedPillar = mb_strtolower(
     trim(
@@ -155,14 +178,31 @@ $requestedPillar = mb_strtolower(
     )
 );
 
-if (
-    !isset($pillarConfigurations[$requestedPillar])
-    || !$pillarConfigurations[$requestedPillar]['available']
-) {
+if (!isset($pillarConfigurations[$requestedPillar])) {
     $requestedPillar = 'story';
 }
 
-$activePillar = $pillarConfigurations[$requestedPillar];
+$requestedWorkflow =
+    $workflowView[$requestedPillar]
+    ?? null;
+
+if (
+    $requestedWorkflow === null
+    || $requestedWorkflow['isLocked']
+) {
+    $requestedPillar = 'story';
+
+    $requestedWorkflow =
+        $workflowView['story'];
+}
+
+$activePillar =
+    $pillarConfigurations[$requestedPillar];
+
+$activePillar['status'] =
+    $requestedWorkflow['status']['label'];
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -234,6 +274,14 @@ $progressView = $container
     ->progressPresenter()
     ->present($progress);
 
+$currentWorkflow =
+    $workflowView[$requestedPillar];
+
+$canCompletePillar = (
+    $progressView['exists']
+    && $progressView['isReady']
+    && $currentWorkflow['isAvailable']
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -475,7 +523,7 @@ $workType = $work->typeLabel();
                                 Status:
                             </span>
 
-                            <strong>
+                            <strong id="forge-active-workflow-status">
                                 <?= htmlspecialchars(
                                     $activePillar['status'],
                                     ENT_QUOTES,
@@ -591,89 +639,98 @@ $workType = $work->typeLabel();
                         as $slug => $pillarConfiguration
                     ): ?>
                         <?php
+                        $pillarWorkflow =
+                            $workflowView[$slug];
+
                         $isActive = (
                             $slug === $requestedPillar
                         );
 
-                        $isAvailable = (
-                            $pillarConfiguration['available']
+                        $isLocked =
+                            $pillarWorkflow['isLocked'];
+
+                        $isCompleted =
+                            $pillarWorkflow['isCompleted'];
+
+                        $pillarHref = (
+                            '/forge.php?work='
+                            . $work->id()
+                            . '&pillar='
+                            . rawurlencode($slug)
                         );
                         ?>
 
-                        <?php if ($isAvailable): ?>
-                            <a
-                                class="
-                                    forge-pillar-link
-                                    <?= $isActive
-                                        ? 'forge-pillar-link--active'
-                                        : '' ?>
-                                "
-                                href="/forge.php?work=<?= $work->id() ?>&pillar=<?= htmlspecialchars(
-                                    $slug,
+                        <a
+                            class="
+                                forge-pillar-link
+                                forge-pillar-link--<?= htmlspecialchars(
+                                    (string) $pillarWorkflow['status']['value'],
                                     ENT_QUOTES,
                                     'UTF-8'
-                                ) ?>"
+                                ) ?>
                                 <?= $isActive
-                                    ? 'aria-current="step"'
+                                    ? 'forge-pillar-link--active'
                                     : '' ?>
-                            >
-                                <span class="forge-pillar-link__marker">
-                                    <?= $isActive ? '●' : '○' ?>
-                                </span>
-
-                                <span class="forge-pillar-link__content">
-                                    <strong>
-                                        <?= htmlspecialchars(
-                                            $pillarConfiguration['name'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </strong>
-
-                                    <small>
-                                        <?= htmlspecialchars(
-                                            $pillarConfiguration['question'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </small>
-                                </span>
-                            </a>
-                        <?php else: ?>
-                            <span
-                                class="
-                                    forge-pillar-link
-                                    forge-pillar-link--locked
-                                "
-                                aria-disabled="true"
-                            >
-                                <span class="forge-pillar-link__marker">
+                            "
+                            data-pillar-link
+                            data-pillar="<?= htmlspecialchars(
+                                $slug,
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                            data-work-id="<?= $work->id() ?>"
+                            <?= !$isLocked
+                                ? 'href="'
+                                    . htmlspecialchars(
+                                        $pillarHref,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    )
+                                    . '"'
+                                : '' ?>
+                            <?= $isActive
+                                ? 'aria-current="step"'
+                                : '' ?>
+                            <?= $isLocked
+                                ? 'aria-disabled="true" tabindex="-1"'
+                                : '' ?>
+                        >
+                            <span class="forge-pillar-link__marker">
+                                <?php if ($isCompleted): ?>
+                                    ✓
+                                <?php elseif ($isActive): ?>
+                                    ●
+                                <?php else: ?>
                                     ○
-                                </span>
-
-                                <span class="forge-pillar-link__content">
-                                    <strong>
-                                        <?= htmlspecialchars(
-                                            $pillarConfiguration['name'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </strong>
-
-                                    <small>
-                                        <?= htmlspecialchars(
-                                            $pillarConfiguration['question'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </small>
-                                </span>
-
-                                <span class="forge-pillar-link__status">
-                                    Locked
-                                </span>
+                                <?php endif; ?>
                             </span>
-                        <?php endif; ?>
+
+                            <span class="forge-pillar-link__content">
+                                <strong>
+                                    <?= htmlspecialchars(
+                                        $pillarConfiguration['name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </strong>
+
+                                <small>
+                                    <?= htmlspecialchars(
+                                        $pillarConfiguration['question'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </small>
+                            </span>
+
+                            <span class="forge-pillar-link__status">
+                                <?= htmlspecialchars(
+                                    (string) $pillarWorkflow['status']['label'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+                        </a>
                     <?php endforeach; ?>
                 </nav>
             </aside>
@@ -1254,7 +1311,107 @@ $workType = $work->typeLabel();
                                     ) ?>
                                 </p>
                             </div>
+                            <div
+    class="forge-workflow-action"
+    id="forge-workflow-action"
+>
+    <?php if ($currentWorkflow['isCompleted']): ?>
+        <div class="forge-workflow-action__completed">
+            <strong>
+                <?= htmlspecialchars(
+                    $activePillar['name'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+                Complete
+            </strong>
 
+            <?php if (
+                $currentWorkflow['completedAt']
+                !== null
+            ): ?>
+                <span>
+                    Completed
+                    <?= htmlspecialchars(
+                        (string) $currentWorkflow
+                            ['completedAt']
+                            ['display'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </span>
+            <?php endif; ?>
+        </div>
+
+        <?php if (
+            $requestedPillar === 'story'
+            && !$workflowView['emotion']['isLocked']
+        ): ?>
+            <a
+                class="button button--primary"
+                id="forge-next-pillar-link"
+                href="/forge.php?work=<?= $work->id() ?>&pillar=emotion"
+            >
+                Continue to Emotion
+            </a>
+        <?php endif; ?>
+    <?php elseif ($canCompletePillar): ?>
+        <form
+            class="forge-workflow-complete"
+            id="forge-workflow-complete-form"
+            method="post"
+            action="/forge/workflow/complete.php"
+        >
+            <input
+                type="hidden"
+                name="csrf_token"
+                value="<?= htmlspecialchars(
+                    Session::csrfToken(),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>"
+            >
+
+            <input
+                type="hidden"
+                name="work_id"
+                value="<?= $work->id() ?>"
+            >
+
+            <input
+                type="hidden"
+                name="pillar"
+                value="<?= htmlspecialchars(
+                    $requestedPillar,
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>"
+            >
+
+            <p>
+                The Story foundation is ready. Complete it
+                when this understanding is strong enough to
+                guide the next creative stage.
+            </p>
+
+            <button
+                class="button button--primary"
+                id="forge-workflow-complete-button"
+                type="submit"
+            >
+                Complete Story
+            </button>
+        </form>
+    <?php endif; ?>
+</div>
+
+<div
+    class="forge-workflow-feedback"
+    id="forge-workflow-feedback"
+    role="status"
+    aria-live="polite"
+    hidden
+></div>
                             <p class="forge-progress__meta">
                                 Evaluation revision
                                 <?= (int) $progressView['revision'] ?>
