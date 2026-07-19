@@ -218,6 +218,25 @@ try {
 
 /*
 |--------------------------------------------------------------------------
+| Persisted pillar progress
+|--------------------------------------------------------------------------
+*/
+
+$progress = $container
+    ->progressService()
+    ->progressForWork(
+        user: $authenticatedUser,
+        workId: $work->id(),
+        pillarValue: $requestedPillar,
+    );
+
+$progressView = $container
+    ->progressPresenter()
+    ->present($progress);
+
+
+/*
+|--------------------------------------------------------------------------
 | View data
 |--------------------------------------------------------------------------
 */
@@ -1106,7 +1125,170 @@ $workType = $work->typeLabel();
                             </p>
                         </div>
                     </section>
+
+                    <section
+                        class="
+                            forge-memory__section
+                            forge-progress
+                        "
+                        data-progress-status="<?= htmlspecialchars(
+                            (string) $progressView['status']['value'],
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>"
+                    >
+                        <div class="forge-progress__heading">
+                            <div>
+                                <p class="eyebrow">
+                                    Story Readiness
+                                </p>
+
+                                <h3>
+                                    Foundation Review
+                                </h3>
+                            </div>
+
+                            <span
+                                class="
+                                    forge-progress__status
+                                    forge-progress__status--<?= htmlspecialchars(
+                                        (string) $progressView['status']['value'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                "
+                            >
+                                <?= htmlspecialchars(
+                                    (string) $progressView['status']['label'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+                        </div>
+
+                        <?php if ($progressView['exists']): ?>
+                            <div class="forge-progress__score">
+                                <strong>
+                                    <?= htmlspecialchars(
+                                        (string) $progressView['readinessDisplay'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </strong>
+
+                                <span>
+                                    <?= $progressView['isReady']
+                                        ? 'Ready for creator review'
+                                        : 'Story is still developing' ?>
+                                </span>
+                            </div>
+
+                            <div
+                                class="forge-progress__meter"
+                                role="progressbar"
+                                aria-label="Story readiness"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                aria-valuenow="<?= (int) $progressView['readinessScore'] ?>"
+                            >
+                                <span
+                                    style="--forge-progress-value: <?= (int) $progressView['readinessScore'] ?>%;"
+                                ></span>
+                            </div>
+
+                            <ul class="forge-progress__criteria">
+                                <?php foreach (
+                                    $progressView['criteria']
+                                    as $criterion
+                                ): ?>
+                                    <li
+                                        class="
+                                            forge-progress__criterion
+                                            forge-progress__criterion--<?= htmlspecialchars(
+                                                (string) $criterion['status']['value'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        "
+                                    >
+                                        <span
+                                            class="forge-progress__criterion-symbol"
+                                            aria-hidden="true"
+                                        >
+                                            <?= htmlspecialchars(
+                                                (string) $criterion['symbol'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </span>
+
+                                        <span class="forge-progress__criterion-label">
+                                            <?= htmlspecialchars(
+                                                (string) $criterion['label'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </span>
+
+                                        <span class="forge-progress__criterion-status">
+                                            <?= htmlspecialchars(
+                                                (string) $criterion['status']['label'],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>
+                                        </span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+
+                            <div class="forge-progress__recommendation">
+                                <strong>
+                                    Recommendation
+                                </strong>
+
+                                <p>
+                                    <?= htmlspecialchars(
+                                        (string) $progressView['recommendation']['display'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </p>
+                            </div>
+
+                            <p class="forge-progress__meta">
+                                Evaluation revision
+                                <?= (int) $progressView['revision'] ?>
+                                ·
+                                <?= htmlspecialchars(
+                                    (string) $progressView['evaluatedAt']['display'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </p>
+                        <?php else: ?>
+                            <div class="forge-progress__empty">
+                                <p>
+                                    Story readiness has not yet been evaluated.
+                                </p>
+
+                                <?php if (!$memoryView['isConfirmed']): ?>
+                                    <p>
+                                        Confirm the Story understanding before
+                                        evaluating its foundation.
+                                    </p>
+                                <?php else: ?>
+                                    <p>
+                                        The confirmed Story Memory is ready
+                                        for a progress evaluation.
+                                    </p>
+                                <?php endif; ?>
+                            </div>
+                        <?php endif; ?>
+                    </section>
+
                 </div>
+
+
 
                 <div
                     class="forge-memory__feedback"

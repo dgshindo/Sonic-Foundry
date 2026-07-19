@@ -29,6 +29,11 @@ use SonicFoundry\Progress\PillarProgressRepository;
 use SonicFoundry\Progress\PillarProgressService;
 use SonicFoundry\Story\StoryProgressEvaluator;
 
+use SonicFoundry\Progress\ProgressPresenter;
+
+use SonicFoundry\Workflow\PillarWorkflowRepository;
+use SonicFoundry\Workflow\PillarWorkflowService;
+
 final class Container
 {
     private ?PDO $database = null;
@@ -74,6 +79,12 @@ final class Container
     private ?PillarProgressService $pillarProgressService = null;
 
     private ?StoryProgressEvaluator $storyProgressEvaluator = null;
+
+    private ?ProgressPresenter $progressPresenter = null;
+
+    private ?PillarWorkflowRepository $pillarWorkflowRepository = null;
+
+    private ?PillarWorkflowService $pillarWorkflowService = null;
 
     /*
     |--------------------------------------------------------------------------
@@ -499,6 +510,57 @@ final class Container
         return $this->pillarProgressService;
     }
 
+    public function progressPresenter(): ProgressPresenter
+    {
+        if (
+            !$this->progressPresenter
+            instanceof ProgressPresenter
+        ) {
+            $this->progressPresenter =
+                new ProgressPresenter();
+        }
+
+        return $this->progressPresenter;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pillar Workflow
+    |--------------------------------------------------------------------------
+    */
+
+    public function workflows(): PillarWorkflowRepository
+    {
+        if (
+            !$this->pillarWorkflowRepository
+            instanceof PillarWorkflowRepository
+        ) {
+            $this->pillarWorkflowRepository =
+                new PillarWorkflowRepository(
+                    $this->database()
+                );
+        }
+
+        return $this->pillarWorkflowRepository;
+    }
+
+    public function workflowService(): PillarWorkflowService
+    {
+        if (
+            !$this->pillarWorkflowService
+            instanceof PillarWorkflowService
+        ) {
+            $this->pillarWorkflowService =
+                new PillarWorkflowService(
+                    workflows: $this->workflows(),
+                    progress: $this->progressService(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->pillarWorkflowService;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Story Specialist
@@ -530,7 +592,7 @@ final class Container
         return $this->storyMemoryExtractor;
     }
 
-        public function storyProgressEvaluator(): StoryProgressEvaluator
+    public function storyProgressEvaluator(): StoryProgressEvaluator
     {
         if (
             !$this->storyProgressEvaluator
