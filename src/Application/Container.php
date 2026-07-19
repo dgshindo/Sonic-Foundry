@@ -25,6 +25,10 @@ use SonicFoundry\User\UserRepository;
 use SonicFoundry\Work\WorkRepository;
 use SonicFoundry\Work\WorkService;
 
+use SonicFoundry\Progress\PillarProgressRepository;
+use SonicFoundry\Progress\PillarProgressService;
+use SonicFoundry\Story\StoryProgressEvaluator;
+
 final class Container
 {
     private ?PDO $database = null;
@@ -64,6 +68,12 @@ final class Container
     private ?CreativePartnerService $creativePartnerService = null;
 
     private ?StoryMemoryExtractor $storyMemoryExtractor = null;
+
+    private ?PillarProgressRepository $pillarProgressRepository = null;
+
+    private ?PillarProgressService $pillarProgressService = null;
+
+    private ?StoryProgressEvaluator $storyProgressEvaluator = null;
 
     /*
     |--------------------------------------------------------------------------
@@ -454,6 +464,43 @@ final class Container
 
     /*
     |--------------------------------------------------------------------------
+    | Progress Engine
+    |--------------------------------------------------------------------------
+    */
+
+    public function progress(): PillarProgressRepository
+    {
+        if (
+            !$this->pillarProgressRepository
+            instanceof PillarProgressRepository
+        ) {
+            $this->pillarProgressRepository =
+                new PillarProgressRepository(
+                    $this->database()
+                );
+        }
+
+        return $this->pillarProgressRepository;
+    }
+
+    public function progressService(): PillarProgressService
+    {
+        if (
+            !$this->pillarProgressService
+            instanceof PillarProgressService
+        ) {
+            $this->pillarProgressService =
+                new PillarProgressService(
+                    progress: $this->progress(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->pillarProgressService;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Story Specialist
     |--------------------------------------------------------------------------
     */
@@ -481,5 +528,23 @@ final class Container
         }
 
         return $this->storyMemoryExtractor;
+    }
+
+        public function storyProgressEvaluator(): StoryProgressEvaluator
+    {
+        if (
+            !$this->storyProgressEvaluator
+            instanceof StoryProgressEvaluator
+        ) {
+            $this->storyProgressEvaluator =
+                new StoryProgressEvaluator(
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    memory: $this->memoryService(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->storyProgressEvaluator;
     }
 }
