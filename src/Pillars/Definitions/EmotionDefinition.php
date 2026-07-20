@@ -5,14 +5,11 @@ namespace SonicFoundry\Pillars\Definitions;
 
 use SonicFoundry\Pillars\Contracts\ConversationDefinition;
 use SonicFoundry\Pillars\Contracts\MemoryDefinition;
-use SonicFoundry\Pillars\Contracts\PillarDefinition;
 use SonicFoundry\Pillars\Contracts\ProgressDefinition;
-use SonicFoundry\Pillars\Support\MemoryFieldDefinition;
-use SonicFoundry\Pillars\Support\MemoryFieldType;
-use SonicFoundry\Pillars\Support\ProgressCriterion;
 use SonicFoundry\Work\WorkPillar;
 
-final class EmotionDefinition implements PillarDefinition
+final class EmotionDefinition
+    extends AbstractPillarDefinition
 {
     public function pillar(): WorkPillar
     {
@@ -30,66 +27,58 @@ final class EmotionDefinition implements PillarDefinition
     {
         return new MemoryDefinition(
             fields: [
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'emotional_core',
                     label: 'Emotional Core',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The emotional core will appear after it is discussed and proposed.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'starting_emotion',
                     label: 'Starting Emotion',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The starting emotional state has not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'ending_emotion',
                     label: 'Ending Emotion',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The ending emotional state has not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'emotional_arc',
                     label: 'Emotional Arc',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The emotional journey has not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'emotional_stakes',
                     label: 'Emotional Stakes',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The emotional stakes have not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'desired_listener_feeling',
                     label: 'Desired Listener Feeling',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The intended listener feeling has not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->listField(
                     key: 'emotional_contrasts',
                     label: 'Emotional Contrasts',
-                    type: MemoryFieldType::List,
                     emptyMessage:
                         'Emotional contrasts will appear after they are identified.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->listField(
                     key: 'emotional_touchstones',
                     label: 'Emotional Touchstones',
-                    type: MemoryFieldType::List,
                     emptyMessage:
                         'Emotional touchstones will appear after they are identified.',
                 ),
@@ -102,10 +91,6 @@ final class EmotionDefinition implements PillarDefinition
 
     public function progress(): ProgressDefinition
     {
-        /*
-         * The prompt file will be created when Emotion Progress
-         * is implemented. D1B only declares its intended location.
-         */
         return new ProgressDefinition(
             title: 'Emotion Readiness',
 
@@ -113,56 +98,56 @@ final class EmotionDefinition implements PillarDefinition
                 'progress/emotion-evaluator.md',
 
             criteria: [
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'emotional_core',
                     label: 'Emotional Core',
                     description:
                         'The central emotional truth of the Work is clearly established.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'starting_emotion',
                     label: 'Starting Emotion',
                     description:
                         'The emotional condition from which the Work begins is understood.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'ending_emotion',
                     label: 'Ending Emotion',
                     description:
                         'The emotional condition toward which the Work moves is understood.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'emotional_arc',
                     label: 'Emotional Arc',
                     description:
                         'The emotional movement from beginning to end is coherent and useful.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'emotional_stakes',
                     label: 'Emotional Stakes',
                     description:
                         'What may be emotionally gained, lost, confronted, or transformed is clear.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'desired_listener_feeling',
                     label: 'Desired Listener Feeling',
                     description:
                         'The intended emotional experience for the listener is sufficiently established.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'emotional_contrasts',
                     label: 'Emotional Contrasts',
                     description:
                         'Meaningful emotional oppositions or tensions have been identified.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'emotional_touchstones',
                     label: 'Emotional Touchstones',
                     description:

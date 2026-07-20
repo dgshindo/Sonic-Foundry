@@ -37,6 +37,10 @@ use SonicFoundry\Workflow\WorkflowPresenter;
 
 use SonicFoundry\Emotion\EmotionMemoryExtractor;
 
+use SonicFoundry\Pillars\Definitions\EmotionDefinition;
+use SonicFoundry\Pillars\Definitions\StoryDefinition;
+use SonicFoundry\Pillars\Registry\PillarRegistry;
+
 final class Container
 {
     private ?PDO $database = null;
@@ -92,6 +96,8 @@ final class Container
     private ?WorkflowPresenter $workflowPresenter = null;
 
     private ?EmotionMemoryExtractor $emotionMemoryExtractor = null;
+
+    private ?PillarRegistry $pillarRegistry = null;
 
 
     
@@ -311,6 +317,36 @@ final class Container
 
     /*
     |--------------------------------------------------------------------------
+    | Pillar Definitions
+    |--------------------------------------------------------------------------
+    */
+
+    public function pillarRegistry(): PillarRegistry
+    {
+        if (
+            !$this->pillarRegistry
+            instanceof PillarRegistry
+        ) {
+            $registry =
+                new PillarRegistry();
+
+            $registry->register(
+                new StoryDefinition()
+            );
+
+            $registry->register(
+                new EmotionDefinition()
+            );
+
+            $this->pillarRegistry =
+                $registry;
+        }
+
+        return $this->pillarRegistry;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | Memory Engine
     |--------------------------------------------------------------------------
     */
@@ -356,7 +392,9 @@ final class Container
             instanceof MemoryPresenter
         ) {
             $this->memoryPresenter =
-                new MemoryPresenter();
+                new MemoryPresenter(
+                    $this->pillarRegistry()
+                );
         }
 
         return $this->memoryPresenter;

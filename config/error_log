@@ -118,3 +118,8 @@ Stack trace:
 [19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1177
 [19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1185
 [19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1185
+[20-Jul-2026 17:42:03 UTC] PHP Fatal error:  Uncaught Error: Unknown named parameter $pillars in D:\SonicFoundry\src\Application\Container.php:397
+Stack trace:
+#0 Command line code(1): SonicFoundry\Application\Container->memoryPresenter()
+#1 {main}
+  thrown in D:\SonicFoundry\src\Application\Container.php on line 397

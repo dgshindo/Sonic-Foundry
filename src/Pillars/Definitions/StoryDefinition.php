@@ -5,14 +5,11 @@ namespace SonicFoundry\Pillars\Definitions;
 
 use SonicFoundry\Pillars\Contracts\ConversationDefinition;
 use SonicFoundry\Pillars\Contracts\MemoryDefinition;
-use SonicFoundry\Pillars\Contracts\PillarDefinition;
 use SonicFoundry\Pillars\Contracts\ProgressDefinition;
-use SonicFoundry\Pillars\Support\MemoryFieldDefinition;
-use SonicFoundry\Pillars\Support\MemoryFieldType;
-use SonicFoundry\Pillars\Support\ProgressCriterion;
 use SonicFoundry\Work\WorkPillar;
 
-final class StoryDefinition implements PillarDefinition
+final class StoryDefinition
+    extends AbstractPillarDefinition
 {
     public function pillar(): WorkPillar
     {
@@ -30,50 +27,44 @@ final class StoryDefinition implements PillarDefinition
     {
         return new MemoryDefinition(
             fields: [
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'summary',
                     label: 'Summary',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'No Story summary has been proposed yet.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->listField(
                     key: 'themes',
                     label: 'Themes',
-                    type: MemoryFieldType::List,
                     emptyMessage:
                         'Themes will appear after they are discussed and proposed.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'perspective',
                     label: 'Perspective',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The narrative perspective has not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'core_tension',
                     label: 'Core Tension',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The central tension has not yet been established.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->listField(
                     key: 'key_subjects',
                     label: 'Key Subjects',
-                    type: MemoryFieldType::List,
                     emptyMessage:
                         'Key subjects will appear after they are identified.',
                 ),
 
-                new MemoryFieldDefinition(
+                $this->textField(
                     key: 'listener_takeaway',
                     label: 'Listener Takeaway',
-                    type: MemoryFieldType::Text,
                     emptyMessage:
                         'The intended listener takeaway has not yet been established.',
                 ),
@@ -93,42 +84,42 @@ final class StoryDefinition implements PillarDefinition
                 'progress/story-evaluator.md',
 
             criteria: [
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'central_meaning',
                     label: 'Central Meaning',
                     description:
                         'The Work has a clear fundamental meaning or subject of exploration.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'perspective',
                     label: 'Perspective',
                     description:
                         'The expressive or narrative viewpoint is sufficiently established.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'core_tension',
                     label: 'Core Tension',
                     description:
                         'A meaningful pressure, contradiction, conflict, or transformation drives the Work.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'themes',
                     label: 'Themes',
                     description:
                         'The central themes are specific, coherent, and creatively useful.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'key_subjects',
                     label: 'Key Subjects',
                     description:
                         'The important people, relationships, places, events, symbols, or ideas are identified.',
                 ),
 
-                new ProgressCriterion(
+                $this->criterion(
                     key: 'listener_takeaway',
                     label: 'Listener Takeaway',
                     description:
