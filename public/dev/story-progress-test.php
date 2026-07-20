@@ -95,10 +95,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $startedAt = hrtime(true);
 
             $evaluation = $container
-                ->storyProgressEvaluator()
+                ->pillarProgressEvaluator()
                 ->evaluate(
                     user: $authenticatedUser,
                     workId: $selectedWork->id(),
+                    pillarValue: 'story',
                 );
 
             $elapsedMilliseconds = round(
@@ -390,7 +391,7 @@ function renderEvaluation(
         <div class="progress-test-container">
             <section class="progress-test-card">
                 <p class="eyebrow">
-                    Progress Engine Diagnostic
+                    Generic Progress Engine Diagnostic
                 </p>
 
                 <h1>

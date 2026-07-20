@@ -24,23 +24,17 @@ use SonicFoundry\Story\StoryMemoryExtractor;
 use SonicFoundry\User\UserRepository;
 use SonicFoundry\Work\WorkRepository;
 use SonicFoundry\Work\WorkService;
-
 use SonicFoundry\Progress\PillarProgressRepository;
 use SonicFoundry\Progress\PillarProgressService;
-use SonicFoundry\Story\StoryProgressEvaluator;
-
 use SonicFoundry\Progress\ProgressPresenter;
-
 use SonicFoundry\Workflow\PillarWorkflowRepository;
 use SonicFoundry\Workflow\PillarWorkflowService;
 use SonicFoundry\Workflow\WorkflowPresenter;
-
 use SonicFoundry\Emotion\EmotionMemoryExtractor;
-
 use SonicFoundry\Pillars\Definitions\EmotionDefinition;
 use SonicFoundry\Pillars\Definitions\StoryDefinition;
 use SonicFoundry\Pillars\Registry\PillarRegistry;
-
+use SonicFoundry\Progress\PillarProgressEvaluator;
 final class Container
 {
     private ?PDO $database = null;
@@ -85,8 +79,6 @@ final class Container
 
     private ?PillarProgressService $pillarProgressService = null;
 
-    private ?StoryProgressEvaluator $storyProgressEvaluator = null;
-
     private ?ProgressPresenter $progressPresenter = null;
 
     private ?PillarWorkflowRepository $pillarWorkflowRepository = null;
@@ -98,6 +90,8 @@ final class Container
     private ?EmotionMemoryExtractor $emotionMemoryExtractor = null;
 
     private ?PillarRegistry $pillarRegistry = null;
+
+    private ?PillarProgressEvaluator $pillarProgressEvaluator = null;
 
 
     
@@ -571,6 +565,34 @@ final class Container
         return $this->progressPresenter;
     }
 
+    public function pillarProgressEvaluator(): PillarProgressEvaluator
+    {
+        if (
+            !$this->pillarProgressEvaluator
+            instanceof PillarProgressEvaluator
+        ) {
+            $this->pillarProgressEvaluator =
+                new PillarProgressEvaluator(
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    memory:
+                        $this->memoryService(),
+
+                    works:
+                        $this->workService(),
+
+                    pillars:
+                        $this->pillarRegistry(),
+                );
+        }
+
+        return $this->pillarProgressEvaluator;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Pillar Workflow
@@ -653,23 +675,7 @@ final class Container
         return $this->storyMemoryExtractor;
     }
 
-    public function storyProgressEvaluator(): StoryProgressEvaluator
-    {
-        if (
-            !$this->storyProgressEvaluator
-            instanceof StoryProgressEvaluator
-        ) {
-            $this->storyProgressEvaluator =
-                new StoryProgressEvaluator(
-                    openAI: $this->openAI(),
-                    prompts: $this->prompts(),
-                    memory: $this->memoryService(),
-                    works: $this->workService(),
-                );
-        }
-
-        return $this->storyProgressEvaluator;
-    }
+    
 
     public function emotionMemoryExtractor(): EmotionMemoryExtractor
     {
