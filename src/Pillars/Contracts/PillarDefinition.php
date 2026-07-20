@@ -14,6 +14,4 @@ interface PillarDefinition
     public function memory(): MemoryDefinition;
 
     public function progress(): ProgressDefinition;
-
-    public function extractionPrompt(): string;
 }

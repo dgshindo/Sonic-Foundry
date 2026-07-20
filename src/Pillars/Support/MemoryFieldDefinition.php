@@ -11,6 +11,28 @@ final class MemoryFieldDefinition
         private MemoryFieldType $type,
         private string $emptyMessage,
     ) {
+        if (
+            !preg_match(
+                '/^[a-z][a-z0-9_]*$/',
+                $this->key
+            )
+        ) {
+            throw new \InvalidArgumentException(
+                'Memory field key must use snake_case.'
+            );
+        }
+
+        if (trim($this->label) === '') {
+            throw new \InvalidArgumentException(
+                'Memory field label cannot be empty.'
+            );
+        }
+
+        if (trim($this->emptyMessage) === '') {
+            throw new \InvalidArgumentException(
+                'Memory field empty message cannot be empty.'
+            );
+        }
     }
 
     public function key(): string
