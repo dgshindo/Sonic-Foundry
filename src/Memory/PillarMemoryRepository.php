@@ -24,12 +24,7 @@ final class PillarMemoryRepository
                 id,
                 work_id,
                 pillar,
-                summary,
-                perspective,
-                core_tension,
-                listener_takeaway,
-                themes,
-                key_subjects,
+                memory_data,
                 confidence,
                 status,
                 revision,
@@ -49,7 +44,7 @@ final class PillarMemoryRepository
 
         $row = $statement->fetch();
 
-        return $row
+        return is_array($row)
             ? $this->hydrate($row)
             : null;
     }
@@ -68,22 +63,22 @@ final class PillarMemoryRepository
                 pillar: $pillar,
             );
 
-            if ($existing === null) {
-                $memory = $this->insertMemory(
+            $memory = $existing === null
+                ? $this->insertMemory(
                     workId: $workId,
                     pillar: $pillar,
                     extraction: $extraction,
                     status: $status,
-                );
-            } else {
-                $memory = $this->updateMemory(
+                )
+                : $this->updateMemory(
                     existing: $existing,
                     extraction: $extraction,
                     status: $status,
                 );
-            }
 
-            $this->insertRevision($memory);
+            $this->insertRevision(
+                $memory
+            );
 
             $this->pdo->commit();
 
@@ -104,7 +99,8 @@ final class PillarMemoryRepository
         $this->pdo->beginTransaction();
 
         try {
-            $nextRevision = $memory->revision() + 1;
+            $nextRevision =
+                $memory->revision() + 1;
 
             $statement = $this->pdo->prepare(
                 '
@@ -121,7 +117,8 @@ final class PillarMemoryRepository
                 'status' => $status->value,
                 'next_revision' => $nextRevision,
                 'id' => $memory->id(),
-                'current_revision' => $memory->revision(),
+                'current_revision' =>
+                    $memory->revision(),
             ]);
 
             if ($statement->rowCount() !== 1) {
@@ -130,18 +127,14 @@ final class PillarMemoryRepository
                 );
             }
 
-            $updated = $this->findByWorkAndPillar(
+            $updated = $this->reload(
                 workId: $memory->workId(),
                 pillar: $memory->pillar(),
             );
 
-            if ($updated === null) {
-                throw new \RuntimeException(
-                    'Updated memory could not be reloaded.'
-                );
-            }
-
-            $this->insertRevision($updated);
+            $this->insertRevision(
+                $updated
+            );
 
             $this->pdo->commit();
 
@@ -166,24 +159,14 @@ final class PillarMemoryRepository
             INSERT INTO work_pillar_memory (
                 work_id,
                 pillar,
-                summary,
-                perspective,
-                core_tension,
-                listener_takeaway,
-                themes,
-                key_subjects,
+                memory_data,
                 confidence,
                 status,
                 revision
             ) VALUES (
                 :work_id,
                 :pillar,
-                :summary,
-                :perspective,
-                :core_tension,
-                :listener_takeaway,
-                :themes,
-                :key_subjects,
+                :memory_data,
                 :confidence,
                 :status,
                 1
@@ -191,27 +174,25 @@ final class PillarMemoryRepository
             '
         );
 
-        $statement->execute(
-            $this->extractionParameters(
-                workId: $workId,
-                pillar: $pillar,
-                extraction: $extraction,
-                status: $status,
-            )
-        );
+        $statement->execute([
+            'work_id' => $workId,
+            'pillar' => $pillar->value,
 
-        $memory = $this->findByWorkAndPillar(
+            'memory_data' =>
+                $this->encodeDocument(
+                    $extraction->data()
+                ),
+
+            'confidence' =>
+                $extraction->confidence(),
+
+            'status' => $status->value,
+        ]);
+
+        return $this->reload(
             workId: $workId,
             pillar: $pillar,
         );
-
-        if ($memory === null) {
-            throw new \RuntimeException(
-                'Created memory could not be reloaded.'
-            );
-        }
-
-        return $memory;
     }
 
     private function updateMemory(
@@ -219,18 +200,14 @@ final class PillarMemoryRepository
         MemoryExtraction $extraction,
         MemoryStatus $status,
     ): PillarMemory {
-        $nextRevision = $existing->revision() + 1;
+        $nextRevision =
+            $existing->revision() + 1;
 
         $statement = $this->pdo->prepare(
             '
             UPDATE work_pillar_memory
             SET
-                summary = :summary,
-                perspective = :perspective,
-                core_tension = :core_tension,
-                listener_takeaway = :listener_takeaway,
-                themes = :themes,
-                key_subjects = :key_subjects,
+                memory_data = :memory_data,
                 confidence = :confidence,
                 status = :status,
                 revision = :next_revision
@@ -240,25 +217,20 @@ final class PillarMemoryRepository
         );
 
         $statement->execute([
-            'summary' => $extraction->summary(),
-            'perspective' => $extraction->perspective(),
-            'core_tension' => $extraction->coreTension(),
-            'listener_takeaway' =>
-                $extraction->listenerTakeaway(),
+            'memory_data' =>
+                $this->encodeDocument(
+                    $extraction->data()
+                ),
 
-            'themes' => $this->encodeList(
-                $extraction->themes()
-            ),
+            'confidence' =>
+                $extraction->confidence(),
 
-            'key_subjects' => $this->encodeList(
-                $extraction->keySubjects()
-            ),
-
-            'confidence' => $extraction->confidence(),
             'status' => $status->value,
             'next_revision' => $nextRevision,
             'id' => $existing->id(),
-            'current_revision' => $existing->revision(),
+
+            'current_revision' =>
+                $existing->revision(),
         ]);
 
         if ($statement->rowCount() !== 1) {
@@ -267,18 +239,10 @@ final class PillarMemoryRepository
             );
         }
 
-        $updated = $this->findByWorkAndPillar(
+        return $this->reload(
             workId: $existing->workId(),
             pillar: $existing->pillar(),
         );
-
-        if ($updated === null) {
-            throw new \RuntimeException(
-                'Updated memory could not be reloaded.'
-            );
-        }
-
-        return $updated;
     }
 
     private function insertRevision(
@@ -290,12 +254,7 @@ final class PillarMemoryRepository
                 memory_id,
                 work_id,
                 pillar,
-                summary,
-                perspective,
-                core_tension,
-                listener_takeaway,
-                themes,
-                key_subjects,
+                memory_data,
                 confidence,
                 status,
                 revision
@@ -303,12 +262,7 @@ final class PillarMemoryRepository
                 :memory_id,
                 :work_id,
                 :pillar,
-                :summary,
-                :perspective,
-                :core_tension,
-                :listener_takeaway,
-                :themes,
-                :key_subjects,
+                :memory_data,
                 :confidence,
                 :status,
                 :revision
@@ -320,19 +274,11 @@ final class PillarMemoryRepository
             'memory_id' => $memory->id(),
             'work_id' => $memory->workId(),
             'pillar' => $memory->pillar()->value,
-            'summary' => $memory->summary(),
-            'perspective' => $memory->perspective(),
-            'core_tension' => $memory->coreTension(),
-            'listener_takeaway' =>
-                $memory->listenerTakeaway(),
 
-            'themes' => $this->encodeList(
-                $memory->themes()
-            ),
-
-            'key_subjects' => $this->encodeList(
-                $memory->keySubjects()
-            ),
+            'memory_data' =>
+                $this->encodeDocument(
+                    $memory->data()
+                ),
 
             'confidence' => $memory->confidence(),
             'status' => $memory->status()->value,
@@ -340,59 +286,51 @@ final class PillarMemoryRepository
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function extractionParameters(
+    private function reload(
         int $workId,
         WorkPillar $pillar,
-        MemoryExtraction $extraction,
-        MemoryStatus $status,
-    ): array {
-        return [
-            'work_id' => $workId,
-            'pillar' => $pillar->value,
-            'summary' => $extraction->summary(),
-            'perspective' => $extraction->perspective(),
-            'core_tension' => $extraction->coreTension(),
-            'listener_takeaway' =>
-                $extraction->listenerTakeaway(),
+    ): PillarMemory {
+        $memory = $this->findByWorkAndPillar(
+            workId: $workId,
+            pillar: $pillar,
+        );
 
-            'themes' => $this->encodeList(
-                $extraction->themes()
-            ),
+        if ($memory === null) {
+            throw new \RuntimeException(
+                'Saved memory could not be reloaded.'
+            );
+        }
 
-            'key_subjects' => $this->encodeList(
-                $extraction->keySubjects()
-            ),
-
-            'confidence' => $extraction->confidence(),
-            'status' => $status->value,
-        ];
+        return $memory;
     }
 
     /**
-     * @param list<string> $values
+     * @param array<string, mixed> $document
      */
-    private function encodeList(
-        array $values,
+    private function encodeDocument(
+        array $document,
     ): string {
         return json_encode(
-            array_values($values),
+            $document,
             JSON_THROW_ON_ERROR
-            | JSON_UNESCAPED_UNICODE
             | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
         );
     }
 
     /**
-     * @return list<string>
+     * @return array<string, mixed>
      */
-    private function decodeList(
+    private function decodeDocument(
         mixed $value,
     ): array {
-        if (!is_string($value) || $value === '') {
-            return [];
+        if (
+            !is_string($value)
+            || trim($value) === ''
+        ) {
+            throw new \RuntimeException(
+                'Creative Memory contains no document.'
+            );
         }
 
         $decoded = json_decode(
@@ -403,17 +341,12 @@ final class PillarMemoryRepository
         );
 
         if (!is_array($decoded)) {
-            return [];
+            throw new \RuntimeException(
+                'Creative Memory document is invalid.'
+            );
         }
 
-        return array_values(
-            array_filter(
-                $decoded,
-                static fn (mixed $item): bool =>
-                    is_string($item)
-                    && trim($item) !== ''
-            )
-        );
+        return $decoded;
     }
 
     /**
@@ -424,67 +357,38 @@ final class PillarMemoryRepository
     ): PillarMemory {
         return new PillarMemory(
             id: (int) $row['id'],
+
             workId: (int) $row['work_id'],
 
             pillar: WorkPillar::from(
                 (string) $row['pillar']
             ),
 
-            summary: $this->nullableString(
-                $row['summary'] ?? null
+            data: $this->decodeDocument(
+                $row['memory_data'] ?? null
             ),
 
-            perspective: $this->nullableString(
-                $row['perspective'] ?? null
-            ),
-
-            coreTension: $this->nullableString(
-                $row['core_tension'] ?? null
-            ),
-
-            listenerTakeaway: $this->nullableString(
-                $row['listener_takeaway'] ?? null
-            ),
-
-            themes: $this->decodeList(
-                $row['themes'] ?? null
-            ),
-
-            keySubjects: $this->decodeList(
-                $row['key_subjects'] ?? null
-            ),
-
-            confidence: $row['confidence'] !== null
-                ? (float) $row['confidence']
-                : null,
+            confidence:
+                $row['confidence'] !== null
+                    ? (float) $row['confidence']
+                    : null,
 
             status: MemoryStatus::from(
                 (string) $row['status']
             ),
 
-            revision: (int) $row['revision'],
+            revision:
+                (int) $row['revision'],
 
-            createdAt: new DateTimeImmutable(
-                (string) $row['created_at']
-            ),
+            createdAt:
+                new DateTimeImmutable(
+                    (string) $row['created_at']
+                ),
 
-            updatedAt: new DateTimeImmutable(
-                (string) $row['updated_at']
-            ),
+            updatedAt:
+                new DateTimeImmutable(
+                    (string) $row['updated_at']
+                ),
         );
-    }
-
-    private function nullableString(
-        mixed $value,
-    ): ?string {
-        if (!is_string($value)) {
-            return null;
-        }
-
-        $value = trim($value);
-
-        return $value !== ''
-            ? $value
-            : null;
     }
 }

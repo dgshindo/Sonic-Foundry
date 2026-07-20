@@ -77,29 +77,35 @@ final class StoryMemoryExtractor
             );
 
         return new MemoryExtraction(
-            summary: $this->nullableString(
-                $result['summary'] ?? null
-            ),
+            data: [
+                'schema_version' => 1,
 
-            perspective: $this->nullableString(
-                $result['perspective'] ?? null
-            ),
+                'summary' => $this->nullableString(
+                    $result['summary'] ?? null
+                ),
 
-            coreTension: $this->nullableString(
-                $result['core_tension'] ?? null
-            ),
+                'perspective' => $this->nullableString(
+                    $result['perspective'] ?? null
+                ),
 
-            listenerTakeaway: $this->nullableString(
-                $result['listener_takeaway'] ?? null
-            ),
+                'core_tension' => $this->nullableString(
+                    $result['core_tension'] ?? null
+                ),
 
-            themes: $this->stringList(
-                $result['themes'] ?? []
-            ),
+                'listener_takeaway' =>
+                    $this->nullableString(
+                        $result['listener_takeaway']
+                            ?? null
+                    ),
 
-            keySubjects: $this->stringList(
-                $result['key_subjects'] ?? []
-            ),
+                'themes' => $this->stringList(
+                    $result['themes'] ?? []
+                ),
+
+                'key_subjects' => $this->stringList(
+                    $result['key_subjects'] ?? []
+                ),
+            ],
 
             confidence: $this->nullableFloat(
                 $result['confidence'] ?? null

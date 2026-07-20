@@ -156,14 +156,16 @@ try {
     $workflowView = $container
         ->workflowPresenter()
         ->present($pillarWorkflow);
-} catch (\DomainException $error) {
-    Session::flash(
-        'work_error',
-        $error->getMessage()
+} catch (\Throwable $error) {
+    exit(
+        htmlspecialchars(
+            $error::class
+            . ': '
+            . $error->getMessage(),
+            ENT_QUOTES,
+            'UTF-8'
+        )
     );
-
-    header('Location: /workspace.php');
-    exit;
 }
 
 /*
@@ -218,43 +220,49 @@ try {
             workId: $work->id(),
             pillarValue: $requestedPillar,
         );
-} catch (\DomainException $error) {
-    Session::flash(
-        'work_error',
-        $error->getMessage()
+} catch (\Throwable $error) {
+    exit(
+        htmlspecialchars(
+            $error::class
+            . ': '
+            . $error->getMessage(),
+            ENT_QUOTES,
+            'UTF-8'
+        )
     );
-
-    header('Location: /workspace.php');
-    exit;
 }
 
 /*
 |--------------------------------------------------------------------------
-| Load persisted Creative Memory
+| Active pillar enum
 |--------------------------------------------------------------------------
 */
 
-try {
-    $pillarMemory = $container
-        ->memoryService()
-        ->memoryForWork(
-            user: $authenticatedUser,
-            workId: $work->id(),
-            pillarValue: $requestedPillar,
-        );
-
-    $memoryView = $container
-        ->memoryPresenter()
-        ->present($pillarMemory);
-} catch (\DomainException $error) {
-    Session::flash(
-        'work_error',
-        $error->getMessage()
+$requestedPillarEnum =
+    \SonicFoundry\Work\WorkPillar::from(
+        $requestedPillar
     );
 
-    header('Location: /workspace.php');
-    exit;
-}
+/*
+|--------------------------------------------------------------------------
+| Persisted pillar memory
+|--------------------------------------------------------------------------
+*/
+
+$memory = $container
+    ->memoryService()
+    ->memoryForWork(
+        user: $authenticatedUser,
+        workId: $work->id(),
+        pillarValue: $requestedPillar,
+    );
+
+$memoryView = $container
+    ->memoryPresenter()
+    ->present(
+        memory: $memory,
+        pillar: $requestedPillarEnum,
+    );
 
 /*
 |--------------------------------------------------------------------------
@@ -1023,165 +1031,135 @@ $workType = $work->typeLabel();
                         </dl>
                     </section>
 
-                    <section class="forge-memory__section">
-                        <h3>
-                            Story Summary
-                        </h3>
+                    <?php foreach (
+    $memoryView['sections'] ?? []
+    as $memorySection
+): ?>
+    <?php
+    $sectionType = (string) (
+        $memorySection['type']
+        ?? 'text'
+    );
 
-                        <div
-                            class="<?= $memoryView['summary']['hasValue']
-                                ? 'forge-memory__value'
-                                : 'forge-memory-empty' ?>"
-                            data-memory-field="summary"
-                        >
-                            <p>
-                                <?= nl2br(
-                                    htmlspecialchars(
-                                        (string) $memoryView['summary']['display'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    )
-                                ) ?>
-                            </p>
-                        </div>
-                    </section>
+    $sectionKey = (string) (
+        $memorySection['key']
+        ?? ''
+    );
 
-                    <section class="forge-memory__section">
-                        <h3>
-                            Themes
-                        </h3>
+    $sectionLabel = (string) (
+        $memorySection['label']
+        ?? 'Creative Memory'
+    );
 
-                        <div data-memory-field="themes">
-                            <?php if ($memoryView['themes']['hasValues']): ?>
-                                <ul class="forge-memory-tags">
-                                    <?php foreach (
-                                        $memoryView['themes']['values']
-                                        as $theme
-                                    ): ?>
-                                        <li>
-                                            <?= htmlspecialchars(
-                                                (string) $theme,
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php else: ?>
-                                <div class="forge-memory-empty">
-                                    <p>
-                                        <?= htmlspecialchars(
-                                            (string) $memoryView['themes']['display'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </section>
+    $sectionValue = is_array(
+        $memorySection['value']
+        ?? null
+    )
+        ? $memorySection['value']
+        : [];
+    ?>
 
-                    <section class="forge-memory__section">
-                        <h3>
-                            Perspective
-                        </h3>
+    <section class="forge-memory__section">
+        <h3>
+            <?= htmlspecialchars(
+                $sectionLabel,
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+        </h3>
 
-                        <div
-                            class="<?= $memoryView['perspective']['hasValue']
-                                ? 'forge-memory__value'
-                                : 'forge-memory-empty' ?>"
-                            data-memory-field="perspective"
-                        >
-                            <p>
+        <div
+            data-memory-field="<?= htmlspecialchars(
+                $sectionKey,
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>"
+        >
+            <?php if ($sectionType === 'list'): ?>
+                <?php
+                $values = is_array(
+                    $sectionValue['values']
+                    ?? null
+                )
+                    ? $sectionValue['values']
+                    : [];
+
+                $hasValues = (
+                    $sectionValue['hasValues']
+                    ?? false
+                ) === true;
+                ?>
+
+                <?php if ($hasValues && $values !== []): ?>
+                    <ul class="forge-memory-tags">
+                        <?php foreach ($values as $value): ?>
+                            <li>
                                 <?= htmlspecialchars(
-                                    (string) $memoryView['perspective']['display'],
+                                    (string) $value,
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
-                            </p>
-                        </div>
-                    </section>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <div class="forge-memory-empty">
+                        <p>
+                            <?= htmlspecialchars(
+                                (string) (
+                                    $sectionValue['display']
+                                    ?? 'Not yet established.'
+                                ),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
+            <?php else: ?>
+                <?php
+                $hasValue = (
+                    $sectionValue['hasValue']
+                    ?? false
+                ) === true;
+                ?>
 
-                    <section class="forge-memory__section">
-                        <h3>
-                            Core Tension
-                        </h3>
+                <div
+                    class="<?= $hasValue
+                        ? 'forge-memory__value'
+                        : 'forge-memory-empty' ?>"
+                >
+                    <p>
+                        <?= nl2br(
+                            htmlspecialchars(
+                                (string) (
+                                    $sectionValue['display']
+                                    ?? 'Not yet established.'
+                                ),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            )
+                        ) ?>
+                    </p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+<?php endforeach; ?>
 
-                        <div
-                            class="<?= $memoryView['coreTension']['hasValue']
-                                ? 'forge-memory__value'
-                                : 'forge-memory-empty' ?>"
-                            data-memory-field="coreTension"
-                        >
-                            <p>
-                                <?= nl2br(
-                                    htmlspecialchars(
-                                        (string) $memoryView['coreTension']['display'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    )
-                                ) ?>
-                            </p>
-                        </div>
-                    </section>
-
-                    <section class="forge-memory__section">
-                        <h3>
-                            Key Subjects
-                        </h3>
-
-                        <div data-memory-field="keySubjects">
-                            <?php if ($memoryView['keySubjects']['hasValues']): ?>
-                                <ul class="forge-memory-tags">
-                                    <?php foreach (
-                                        $memoryView['keySubjects']['values']
-                                        as $subject
-                                    ): ?>
-                                        <li>
-                                            <?= htmlspecialchars(
-                                                (string) $subject,
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            <?php else: ?>
-                                <div class="forge-memory-empty">
-                                    <p>
-                                        <?= htmlspecialchars(
-                                            (string) $memoryView['keySubjects']['display'],
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
-                                    </p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </section>
-
-                    <section class="forge-memory__section">
-                        <h3>
-                            Listener Takeaway
-                        </h3>
-
-                        <div
-                            class="<?= $memoryView['listenerTakeaway']['hasValue']
-                                ? 'forge-memory__value'
-                                : 'forge-memory-empty' ?>"
-                            data-memory-field="listenerTakeaway"
-                        >
-                            <p>
-                                <?= nl2br(
-                                    htmlspecialchars(
-                                        (string) $memoryView['listenerTakeaway']['display'],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    )
-                                ) ?>
-                            </p>
-                        </div>
-                    </section>
+<?php if (
+    ($memoryView['sections'] ?? [])
+    === []
+): ?>
+    <section class="forge-memory__section">
+        <div class="forge-memory-empty">
+            <p>
+                Creative Memory fields for this pillar
+                are not yet configured.
+            </p>
+        </div>
+    </section>
+<?php endif; ?>
 
                     <section
                         class="
@@ -1195,6 +1173,7 @@ $workType = $work->typeLabel();
                         ) ?>"
                     >
                         <div class="forge-progress__heading">
+                            <?php if ($requestedPillar === 'story'): ?>
                             <div>
                                 <p class="eyebrow">
                                     Story Readiness
@@ -1222,7 +1201,7 @@ $workType = $work->typeLabel();
                                 ) ?>
                             </span>
                         </div>
-
+                        
                         <?php if ($progressView['exists']): ?>
                             <div class="forge-progress__score">
                                 <strong>
@@ -1445,7 +1424,7 @@ $workType = $work->typeLabel();
 
                 </div>
 
-
+            <?php endif; ?>
 
                 <div
                     class="forge-memory__feedback"
@@ -1503,7 +1482,7 @@ $workType = $work->typeLabel();
                         </button>
                     </form>
                 <?php endif; ?>
-
+                
                 <footer class="forge-memory__footer">
                     <span id="forge-memory-meta">
                         <?php if ($memoryView['exists']): ?>

@@ -6,16 +6,10 @@ namespace SonicFoundry\Memory;
 final class MemoryExtraction
 {
     /**
-     * @param list<string> $themes
-     * @param list<string> $keySubjects
+     * @param array<string, mixed> $data
      */
     public function __construct(
-        private readonly ?string $summary,
-        private readonly ?string $perspective,
-        private readonly ?string $coreTension,
-        private readonly ?string $listenerTakeaway,
-        private readonly array $themes,
-        private readonly array $keySubjects,
+        private readonly array $data,
         private readonly ?float $confidence,
     ) {
         if (
@@ -29,54 +23,24 @@ final class MemoryExtraction
                 'Memory confidence must be between 0 and 1.'
             );
         }
-    }
 
-    public function summary(): ?string
-    {
-        return $this->normalizeText(
-            $this->summary
-        );
-    }
-
-    public function perspective(): ?string
-    {
-        return $this->normalizeText(
-            $this->perspective
-        );
-    }
-
-    public function coreTension(): ?string
-    {
-        return $this->normalizeText(
-            $this->coreTension
-        );
-    }
-
-    public function listenerTakeaway(): ?string
-    {
-        return $this->normalizeText(
-            $this->listenerTakeaway
+        /*
+         * Prove that the document can be persisted as JSON.
+         */
+        json_encode(
+            $this->data,
+            JSON_THROW_ON_ERROR
+            | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
         );
     }
 
     /**
-     * @return list<string>
+     * @return array<string, mixed>
      */
-    public function themes(): array
+    public function data(): array
     {
-        return $this->normalizeList(
-            $this->themes
-        );
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function keySubjects(): array
-    {
-        return $this->normalizeList(
-            $this->keySubjects
-        );
+        return $this->data;
     }
 
     public function confidence(): ?float
@@ -84,58 +48,52 @@ final class MemoryExtraction
         return $this->confidence;
     }
 
+    public function schemaVersion(): int
+    {
+        $version = $this->data['schema_version']
+            ?? 1;
+
+        return is_int($version) && $version > 0
+            ? $version
+            : 1;
+    }
+
     public function isEmpty(): bool
     {
-        return (
-            $this->summary() === null
-            && $this->perspective() === null
-            && $this->coreTension() === null
-            && $this->listenerTakeaway() === null
-            && $this->themes() === []
-            && $this->keySubjects() === []
-        );
+        foreach ($this->data as $key => $value) {
+            if ($key === 'schema_version') {
+                continue;
+            }
+
+            if ($this->containsMeaningfulValue($value)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    private function normalizeText(
-        ?string $value,
-    ): ?string {
+    private function containsMeaningfulValue(
+        mixed $value,
+    ): bool {
         if ($value === null) {
-            return null;
+            return false;
         }
 
-        $normalized = trim($value);
-
-        return $normalized !== ''
-            ? $normalized
-            : null;
-    }
-
-    /**
-     * @param list<string> $values
-     *
-     * @return list<string>
-     */
-    private function normalizeList(
-        array $values,
-    ): array {
-        $normalized = [];
-
-        foreach ($values as $value) {
-            $value = trim($value);
-
-            if ($value === '') {
-                continue;
-            }
-
-            $key = mb_strtolower($value);
-
-            if (isset($normalized[$key])) {
-                continue;
-            }
-
-            $normalized[$key] = $value;
+        if (is_string($value)) {
+            return trim($value) !== '';
         }
 
-        return array_values($normalized);
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                if ($this->containsMeaningfulValue($item)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
     }
 }

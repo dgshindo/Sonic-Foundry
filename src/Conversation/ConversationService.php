@@ -8,6 +8,7 @@ use SonicFoundry\Auth\AuthenticatedUser;
 use SonicFoundry\Work\Work;
 use SonicFoundry\Work\WorkPillar;
 use SonicFoundry\Work\WorkService;
+use SonicFoundry\Workflow\PillarWorkflowService;
 
 final class ConversationService
 {
@@ -16,6 +17,7 @@ final class ConversationService
     public function __construct(
         private readonly ConversationRepository $messages,
         private readonly WorkService $works,
+        private readonly PillarWorkflowService $workflow,
     ) {
     }
 
@@ -35,7 +37,8 @@ final class ConversationService
         );
 
         $this->assertPillarAvailable(
-            work: $work,
+            user: $user,
+            workId: $work->id(),
             pillar: $pillar,
         );
 
@@ -84,7 +87,8 @@ final class ConversationService
         );
 
         $this->assertPillarAvailable(
-            work: $work,
+            user: $user,
+            workId: $work->id(),
             pillar: $pillar,
         );
 
@@ -113,20 +117,21 @@ final class ConversationService
     }
 
     private function assertPillarAvailable(
-        Work $work,
+        AuthenticatedUser $user,
+        int $workId,
         WorkPillar $pillar,
     ): void {
-        /*
-         * During the Story reference implementation, only Story
-         * is available. This rule will later move into stored
-         * pillar-progress state.
-         */
-        if ($pillar !== WorkPillar::Story) {
-            throw new DomainException(
+        $workflow = $this->workflow
+            ->pillarForWork(
+                user: $user,
+                workId: $workId,
+                pillarValue: $pillar->value,
+            );
+
+        if ($workflow->isLocked()) {
+            throw new \DomainException(
                 'That creative pillar is not yet available.'
             );
         }
-
-        
     }
 }

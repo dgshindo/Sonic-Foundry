@@ -123,17 +123,7 @@ final class StoryProgressEvaluator
             'pillar' => $memory->pillar()->value,
             'status' => $memory->status()->value,
             'revision' => $memory->revision(),
-            'summary' => $memory->summary(),
-            'perspective' => $memory->perspective(),
-            'core_tension' => $memory->coreTension(),
-
-            'listener_takeaway' =>
-                $memory->listenerTakeaway(),
-
-            'themes' => $memory->themes(),
-
-            'key_subjects' =>
-                $memory->keySubjects(),
+            'memory_data' => $memory->data(),
         ];
 
         return implode(

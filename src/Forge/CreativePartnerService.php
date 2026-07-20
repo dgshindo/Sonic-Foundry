@@ -14,6 +14,7 @@ use SonicFoundry\Memory\PillarMemoryService;
 use SonicFoundry\Work\Work;
 use SonicFoundry\Work\WorkPillar;
 use SonicFoundry\Work\WorkService;
+use SonicFoundry\Workflow\PillarWorkflowService;
 
 final class CreativePartnerService
 {
@@ -25,6 +26,7 @@ final class CreativePartnerService
         private readonly ConversationRepository $messages,
         private readonly WorkService $works,
         private readonly PillarMemoryService $memory,
+        private readonly PillarWorkflowService $workflow,
     ) {
     }
 
@@ -49,7 +51,8 @@ final class CreativePartnerService
         );
 
         $this->assertPillarAvailable(
-            work: $work,
+            user: $user,
+            workId: $work->id(),
             pillar: $pillar,
         );
 
@@ -219,26 +222,13 @@ final class CreativePartnerService
     ): string {
         $payload = [
             'pillar' => $memory->pillar()->value,
-
             'status' => $memory->status()->value,
-
             'revision' => $memory->revision(),
+            'schema_version' =>
+                $memory->schemaVersion(),
 
-            'summary' => $memory->summary(),
-
-            'perspective' =>
-                $memory->perspective(),
-
-            'core_tension' =>
-                $memory->coreTension(),
-
-            'listener_takeaway' =>
-                $memory->listenerTakeaway(),
-
-            'themes' => $memory->themes(),
-
-            'key_subjects' =>
-                $memory->keySubjects(),
+            'memory_data' =>
+                $memory->data(),
         ];
 
         $json = json_encode(
@@ -299,17 +289,19 @@ final class CreativePartnerService
     }
 
     private function assertPillarAvailable(
-        Work $work,
+        AuthenticatedUser $user,
+        int $workId,
         WorkPillar $pillar,
     ): void {
-        /*
-         * Work is intentionally retained here.
-         * Persistent pillar progress will later determine
-         * availability from the Work itself.
-         */
+        $workflow = $this->workflow
+            ->pillarForWork(
+                user: $user,
+                workId: $workId,
+                pillarValue: $pillar->value,
+            );
 
-        if ($pillar !== WorkPillar::Story) {
-            throw new \RuntimeException(
+        if ($workflow->isLocked()) {
+            throw new \DomainException(
                 'That creative pillar is not yet available.'
             );
         }

@@ -35,6 +35,8 @@ use SonicFoundry\Workflow\PillarWorkflowRepository;
 use SonicFoundry\Workflow\PillarWorkflowService;
 use SonicFoundry\Workflow\WorkflowPresenter;
 
+use SonicFoundry\Emotion\EmotionMemoryExtractor;
+
 final class Container
 {
     private ?PDO $database = null;
@@ -88,6 +90,9 @@ final class Container
     private ?PillarWorkflowService $pillarWorkflowService = null;
 
     private ?WorkflowPresenter $workflowPresenter = null;
+
+    private ?EmotionMemoryExtractor $emotionMemoryExtractor = null;
+
 
     
 
@@ -295,13 +300,11 @@ final class Container
         ) {
             $this->conversationService =
                 new ConversationService(
-                    messages:
-                        $this->conversations(),
-
-                    works:
-                        $this->workService(),
+                    messages: $this->conversations(),
+                    works: $this->workService(),
+                    workflow: $this->workflowService(),
                 );
-        }
+          }
 
         return $this->conversationService;
     }
@@ -472,6 +475,8 @@ final class Container
 
                     memory:
                         $this->memoryService(),
+                        
+                    workflow: $this->workflowService()
                 );
         }
 
@@ -626,5 +631,24 @@ final class Container
         }
 
         return $this->storyProgressEvaluator;
+    }
+
+    public function emotionMemoryExtractor(): EmotionMemoryExtractor
+    {
+        if (
+            !$this->emotionMemoryExtractor
+            instanceof EmotionMemoryExtractor
+        ) {
+            $this->emotionMemoryExtractor =
+                new EmotionMemoryExtractor(
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    messages: $this->conversations(),
+                    memory: $this->memoryService(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->emotionMemoryExtractor;
     }
 }

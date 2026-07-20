@@ -5,6 +5,7 @@ require_once dirname(__DIR__, 2)
     . '/config/bootstrap.php';
 
 use SonicFoundry\Auth\Session;
+use SonicFoundry\Work\WorkPillar;
 
 /**
  * Return a conventional JSON error before streaming begins.
@@ -173,20 +174,30 @@ if ($workId === null) {
     );
 }
 
-if ($pillar !== 'story') {
+$resolvedPillar = WorkPillar::tryFrom(
+    mb_strtolower(
+        trim($pillar)
+    )
+);
+
+if ($resolvedPillar === null) {
     respondWithJson(
         [
             'success' => false,
+
             'error' => [
                 'code' => 'INVALID_PILLAR',
+
                 'message' => (
-                    'That creative pillar is not yet available.'
+                    'A valid creative pillar is required.'
                 ),
             ],
         ],
         422
     );
 }
+
+$pillar = $resolvedPillar->value;
 
 /*
 |--------------------------------------------------------------------------

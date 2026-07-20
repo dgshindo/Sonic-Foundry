@@ -9,19 +9,13 @@ use SonicFoundry\Work\WorkPillar;
 final class PillarMemory
 {
     /**
-     * @param list<string> $themes
-     * @param list<string> $keySubjects
+     * @param array<string, mixed> $data
      */
     public function __construct(
         private readonly int $id,
         private readonly int $workId,
         private readonly WorkPillar $pillar,
-        private readonly ?string $summary,
-        private readonly ?string $perspective,
-        private readonly ?string $coreTension,
-        private readonly ?string $listenerTakeaway,
-        private readonly array $themes,
-        private readonly array $keySubjects,
+        private readonly array $data,
         private readonly ?float $confidence,
         private readonly MemoryStatus $status,
         private readonly int $revision,
@@ -57,6 +51,13 @@ final class PillarMemory
                 'Memory confidence must be between 0 and 1.'
             );
         }
+
+        json_encode(
+            $this->data,
+            JSON_THROW_ON_ERROR
+            | JSON_UNESCAPED_SLASHES
+            | JSON_UNESCAPED_UNICODE
+        );
     }
 
     public function id(): int
@@ -74,40 +75,32 @@ final class PillarMemory
         return $this->pillar;
     }
 
-    public function summary(): ?string
-    {
-        return $this->summary;
-    }
-
-    public function perspective(): ?string
-    {
-        return $this->perspective;
-    }
-
-    public function coreTension(): ?string
-    {
-        return $this->coreTension;
-    }
-
-    public function listenerTakeaway(): ?string
-    {
-        return $this->listenerTakeaway;
-    }
-
     /**
-     * @return list<string>
+     * Return the authoritative pillar-specific memory document.
+     *
+     * @return array<string, mixed>
      */
-    public function themes(): array
+    public function data(): array
     {
-        return $this->themes;
+        return $this->data;
     }
 
-    /**
-     * @return list<string>
-     */
-    public function keySubjects(): array
+    public function schemaVersion(): int
     {
-        return $this->keySubjects;
+        $version = $this->data['schema_version']
+            ?? 1;
+
+        return is_int($version) && $version > 0
+            ? $version
+            : 1;
+    }
+
+    public function value(
+        string $key,
+        mixed $default = null,
+    ): mixed {
+        return $this->data[$key]
+            ?? $default;
     }
 
     public function confidence(): ?float
@@ -142,11 +135,13 @@ final class PillarMemory
 
     public function isProposed(): bool
     {
-        return $this->status === MemoryStatus::Proposed;
+        return $this->status
+            === MemoryStatus::Proposed;
     }
 
     public function isConfirmed(): bool
     {
-        return $this->status === MemoryStatus::Confirmed;
+        return $this->status
+            === MemoryStatus::Confirmed;
     }
 }

@@ -15,3 +15,106 @@ Stack trace:
 [19-Jul-2026 12:02:58 UTC] PHP Warning:  Undefined array key "available" in D:\SonicFoundry\public\forge.php on line 209
 [19-Jul-2026 12:03:31 UTC] PHP Warning:  Undefined array key "available" in D:\SonicFoundry\public\forge.php on line 209
 [19-Jul-2026 12:03:47 UTC] PHP Warning:  Undefined array key "available" in D:\SonicFoundry\public\forge.php on line 209
+[19-Jul-2026 14:52:07 UTC] PHP Warning:  Undefined variable $memory in D:\SonicFoundry\public\forge.php on line 249
+[19-Jul-2026 14:52:07 UTC] PHP Warning:  Undefined variable $requestedPillarEnum in D:\SonicFoundry\public\forge.php on line 249
+[19-Jul-2026 14:52:07 UTC] PHP Fatal error:  Uncaught TypeError: SonicFoundry\Memory\MemoryPresenter::present(): Argument #2 ($pillar) must be of type SonicFoundry\Work\WorkPillar, null given, called in D:\SonicFoundry\public\forge.php on line 249 and defined in D:\SonicFoundry\src\Memory\MemoryPresenter.php:13
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Memory\MemoryPresenter->present(NULL, NULL)
+#1 {main}
+  thrown in D:\SonicFoundry\src\Memory\MemoryPresenter.php on line 13
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 19:06:44 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 22:13:36 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 22:15:38 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1040
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "summary" in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1048
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1063
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "themes" in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1082
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1098
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "perspective" in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1105
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1119
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "coreTension" in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1127
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1142
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "keySubjects" in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1161
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1177
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Undefined array key "listenerTakeaway" in D:\SonicFoundry\public\forge.php on line 1185
+[19-Jul-2026 22:16:59 UTC] PHP Warning:  Trying to access array offset on value of type null in D:\SonicFoundry\public\forge.php on line 1185

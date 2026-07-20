@@ -1023,87 +1023,96 @@
             );
         };
 
-        const refreshMemoryPanel = (
-            memory
-        ) => {
+            const refreshMemoryPanel = (
+        memory
+    ) => {
+        if (
+            !memoryPanel
+            || !memoryStatus
+            || !memory
+        ) {
+            return;
+        }
+
+        memoryPanel.dataset.memoryStatus =
+            memory.status.value;
+
+        memoryStatus.className =
+            'forge-memory__status '
+            + (
+                'forge-memory__status--'
+                + memory.status.value
+            );
+
+        memoryStatus.textContent =
+            memory.status.label;
+
+        const sections = Array.isArray(
+            memory.sections
+        )
+            ? memory.sections
+            : [];
+
+        for (const section of sections) {
             if (
-                !memoryPanel
-                || !memoryStatus
-                || !memory
+                !section
+                || typeof section !== 'object'
+                || typeof section.key !== 'string'
             ) {
-                return;
+                continue;
             }
 
-            memoryPanel.dataset.memoryStatus =
-                memory.status.value;
+            const field = (
+                section.value
+                && typeof section.value === 'object'
+            )
+                ? section.value
+                : {};
 
-            memoryStatus.className =
-                'forge-memory__status '
-                + (
-                    'forge-memory__status--'
-                    + memory.status.value
+            if (section.type === 'list') {
+                replaceMemoryTags(
+                    section.key,
+                    field,
+                    'Not yet established.'
                 );
 
-            memoryStatus.textContent =
-                memory.status.label;
-
-            replaceMemoryText(
-                'summary',
-                memory.summary,
-                'No summary has been established.'
-            );
-
-            replaceMemoryTags(
-                'themes',
-                memory.themes,
-                'No themes have been established.'
-            );
-
-            replaceMemoryText(
-                'perspective',
-                memory.perspective,
-                'Perspective has not been established.'
-            );
-
-            replaceMemoryText(
-                'coreTension',
-                memory.coreTension,
-                'Core tension has not been established.'
-            );
-
-            replaceMemoryTags(
-                'keySubjects',
-                memory.keySubjects,
-                'No key subjects have been established.'
-            );
-
-            replaceMemoryText(
-                'listenerTakeaway',
-                memory.listenerTakeaway,
-                'Listener takeaway has not been established.'
-            );
-
-            if (memoryMeta) {
-                memoryMeta.textContent =
-                    `Revision ${memory.revision} · Updated `
-                    + memory.updatedAt.display;
+                continue;
             }
 
-            if (memoryConfirmForm) {
-                memoryConfirmForm.remove();
-            }
+            replaceMemoryText(
+                section.key,
+                field,
+                'Not yet established.'
+            );
+        }
 
-            if (memoryFeedback) {
-                memoryFeedback.classList.remove(
-                    'forge-memory__feedback--error'
-                );
+        if (memoryMeta) {
+            const revision =
+                memory.revision ?? '—';
 
-                memoryFeedback.textContent =
-                    'Creative Memory confirmed.';
+            const updated =
+                memory.updatedAt?.display
+                ?? '—';
 
-                memoryFeedback.hidden = false;
-            }
-        };
+            memoryMeta.textContent =
+                `Revision ${revision} · Updated ${updated}`;
+        }
+
+        if (memoryConfirmForm) {
+            memoryConfirmForm.remove();
+        }
+
+        if (memoryFeedback) {
+            memoryFeedback.classList.remove(
+                'forge-memory__feedback--error'
+            );
+
+            memoryFeedback.textContent =
+                'Creative Memory confirmed.';
+
+            memoryFeedback.hidden = false;
+        }
+    };
 
         const confirmMemory = async () => {
             if (
