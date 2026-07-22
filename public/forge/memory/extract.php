@@ -289,6 +289,14 @@ try {
                     workId: $workId,
                 ),
 
+        WorkPillar::Impact =>
+            $container
+                ->impactMemoryExtractor()
+                ->extract(
+                    user: $authenticatedUser,
+                    workId: $workId,
+                ),
+
         default =>
             throw new \DomainException(
                 'Memory extraction is not yet '

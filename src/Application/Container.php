@@ -39,6 +39,8 @@ use SonicFoundry\Identity\IdentityMemoryExtractor;
 use SonicFoundry\Pillars\Definitions\IdentityDefinition;
 use SonicFoundry\Sound\SoundMemoryExtractor;
 use SonicFoundry\Pillars\Definitions\SoundDefinition;
+use SonicFoundry\Impact\ImpactMemoryExtractor;
+use SonicFoundry\Pillars\Definitions\ImpactDefinition;
 
 final class Container
 {
@@ -101,6 +103,8 @@ final class Container
     private ?IdentityMemoryExtractor $identityMemoryExtractor = null;
 
     private ?SoundMemoryExtractor $soundMemoryExtractor = null;
+
+    private ?ImpactMemoryExtractor $impactMemoryExtractor = null;
     
 
     /*
@@ -345,6 +349,10 @@ final class Container
 
             $registry->register(
                 new SoundDefinition()
+            );
+
+            $registry->register(
+                new ImpactDefinition()
             );
 
             $this->pillarRegistry =
@@ -747,5 +755,24 @@ final class Container
         }
 
         return $this->soundMemoryExtractor;
+    }
+
+    public function impactMemoryExtractor(): ImpactMemoryExtractor
+    {
+        if (
+            !$this->impactMemoryExtractor
+            instanceof ImpactMemoryExtractor
+        ) {
+            $this->impactMemoryExtractor =
+                new ImpactMemoryExtractor(
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    messages: $this->conversations(),
+                    memory: $this->memoryService(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->impactMemoryExtractor;
     }
 }

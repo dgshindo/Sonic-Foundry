@@ -227,3 +227,18 @@ Stack trace:
 #0 D:\SonicFoundry\public\forge.php(250): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
 #1 {main}
   thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[22-Jul-2026 14:54:02 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "impact". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(250): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[22-Jul-2026 17:26:48 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "impact". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(250): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[22-Jul-2026 17:54:04 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "impact". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(250): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
