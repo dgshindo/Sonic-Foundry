@@ -31,35 +31,6 @@
         'forge-error'
     );
 
-        /*
-        |--------------------------------------------------------------------------
-        | Creative Memory DOM
-        |--------------------------------------------------------------------------
-        */
-
-        const memoryPanel = document.getElementById(
-            'forge-memory'
-        );
-
-        const memoryStatus = document.getElementById(
-            'forge-memory-status'
-        );
-
-        const memoryFeedback = document.getElementById(
-            'forge-memory-feedback'
-        );
-
-        const memoryConfirmForm = document.getElementById(
-            'forge-memory-confirm-form'
-        );
-
-        const memoryConfirmButton = document.getElementById(
-            'forge-memory-confirm-button'
-        );
-
-        const memoryMeta = document.getElementById(
-            'forge-memory-meta'
-        );
 
     if (
         !form
@@ -71,6 +42,47 @@
     ) {
         return;
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creative Memory DOM
+    |--------------------------------------------------------------------------
+    */
+
+    const memoryPanel =
+        document.getElementById(
+            'forge-memory-panel'
+        );
+
+    const memoryStatus =
+        document.getElementById(
+            'forge-memory-status'
+        );
+
+    const memoryFeedback =
+        document.getElementById(
+            'forge-memory-feedback'
+        );
+
+    const memoryConfirmForm =
+        document.getElementById(
+            'forge-memory-confirm-form'
+        );
+
+    const memoryConfirmButton =
+        document.getElementById(
+            'forge-memory-confirm-button'
+        );
+
+    const memoryExtractForm =
+        document.getElementById(
+            'forge-memory-extract-form'
+        );
+
+    const memoryExtractButton =
+        document.getElementById(
+            'forge-memory-extract-button'
+        );
 
     /*
     |--------------------------------------------------------------------------
@@ -907,6 +919,136 @@
         }
     );
 
+            /*
+            |--------------------------------------------------------------------------
+            | Creative Memory extraction
+            |--------------------------------------------------------------------------
+            */
+
+            const extractMemory = async () => {
+                if (
+                    !memoryExtractForm
+                    || !memoryExtractButton
+                ) {
+                    return;
+                }
+
+                const originalButtonText =
+                    memoryExtractButton.textContent;
+
+                memoryExtractButton.disabled = true;
+
+                memoryExtractButton.textContent =
+                    'Building understanding...';
+
+                if (memoryFeedback) {
+                    memoryFeedback.hidden = true;
+                    memoryFeedback.textContent = '';
+
+                    memoryFeedback.classList.remove(
+                        'forge-memory__feedback--error'
+                    );
+                }
+
+                try {
+                    const response = await fetch(
+                        memoryExtractForm.action,
+                        {
+                            method: 'POST',
+
+                            body: new FormData(
+                                memoryExtractForm
+                            ),
+
+                            headers: {
+                                'Accept':
+                                    'application/json',
+
+                                'X-Requested-With':
+                                    'XMLHttpRequest'
+                            },
+
+                            credentials:
+                                'same-origin',
+
+                            cache:
+                                'no-store'
+                        }
+                    );
+
+                    const payload =
+                        await readJsonResponse(
+                            response
+                        );
+
+                    if (response.status === 401) {
+                        window.location.assign(
+                            '/login.php'
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        !response.ok
+                        || payload.success !== true
+                        || !payload.data?.memory
+                    ) {
+                        throw new Error(
+                            payload.error?.message
+                            ?? (
+                                'The Creative Partner could '
+                                + 'not propose an understanding.'
+                            )
+                        );
+                    }
+
+                    /*
+                    * Use the proven server renderer for the complete
+                    * proposed-memory state and confirmation controls.
+                    */
+                    window.location.reload();
+                } catch (error) {
+                    if (memoryFeedback) {
+                        memoryFeedback.textContent =
+                            error instanceof Error
+                                ? error.message
+                                : (
+                                    'The Creative Partner could '
+                                    + 'not propose an understanding.'
+                                );
+
+                        memoryFeedback.hidden = false;
+
+                        memoryFeedback.classList.add(
+                            'forge-memory__feedback--error'
+                        );
+                    }
+                } finally {
+                    if (
+                        memoryExtractButton
+                        && memoryExtractButton.isConnected
+                    ) {
+                        memoryExtractButton.disabled =
+                            false;
+
+                        memoryExtractButton.textContent =
+                            originalButtonText;
+                    }
+                }
+            };
+
+            if (memoryExtractForm) {
+                memoryExtractForm.addEventListener(
+                    'submit',
+                    (event) => {
+                        event.preventDefault();
+
+                        void extractMemory();
+                    }
+                );
+            }
+    
         /*
         |--------------------------------------------------------------------------
         | Creative Memory confirmation
@@ -1124,8 +1266,7 @@
 
             memoryConfirmButton.disabled = true;
 
-            memoryConfirmButton.textContent =
-                'Confirming...';
+            memoryConfirmButton.textContent = 'Confirming and evaluating...';
 
             if (memoryFeedback) {
                 memoryFeedback.hidden = true;
@@ -1192,6 +1333,22 @@
                 refreshMemoryPanel(
                     payload.data.memory
                 );
+                if (payload.data.progressError) {
+                    if (memoryFeedback) {
+                        memoryFeedback.textContent =
+                            payload.data.progressError;
+
+                        memoryFeedback.hidden = false;
+
+                        memoryFeedback.classList.add(
+                            'forge-memory__feedback--error'
+                        );
+                    }
+
+                    return;
+                }
+
+                window.location.reload();
             } catch (error) {
                 if (memoryFeedback) {
                     memoryFeedback.textContent =
@@ -1213,14 +1370,17 @@
                     memoryConfirmButton
                     && memoryConfirmButton.isConnected
                 ) {
-                    memoryConfirmButton.disabled =
-                        false;
+                    memoryConfirmButton.disabled = false;
 
                     memoryConfirmButton.textContent =
                         'Confirm Understanding';
                 }
             }
         };
+
+           
+
+            
 
         if (memoryConfirmForm) {
             memoryConfirmForm.addEventListener(

@@ -5,6 +5,7 @@ require_once dirname(__DIR__) . '/config/bootstrap.php';
 
 //use DomainException;
 use SonicFoundry\Auth\Session;
+use SonicFoundry\Work\WorkPillar;
 
 /*
 |--------------------------------------------------------------------------
@@ -242,6 +243,11 @@ $requestedPillarEnum =
     \SonicFoundry\Work\WorkPillar::from(
         $requestedPillar
     );
+
+$activeProgressDefinition = $container
+    ->pillarRegistry()
+    ->definition($requestedPillarEnum)
+    ->progress();    
 
 /*
 |--------------------------------------------------------------------------
@@ -1173,10 +1179,26 @@ $workType = $work->typeLabel();
                         ) ?>"
                     >
                         <div class="forge-progress__heading">
-                            <?php if ($requestedPillar === 'story'): ?>
+                            <?php if (
+                                        in_array(
+                                            $requestedPillarEnum,
+                                            [
+                                                WorkPillar::Story,
+                                                WorkPillar::Emotion,
+                                                WorkPillar::Sound,
+                                                WorkPillar::Identity,
+                                                WorkPillar::Impact,
+                                            ],
+                                            true
+                                        )
+                                    ): ?>
                             <div>
                                 <p class="eyebrow">
-                                    Story Readiness
+                                    <?= htmlspecialchars(
+                                        $activeProgressDefinition->title(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
                                 </p>
 
                                 <h3>
@@ -1202,6 +1224,67 @@ $workType = $work->typeLabel();
                             </span>
                         </div>
                         
+                        <?php if (
+                            !$memoryView['isConfirmed']
+                            && $currentWorkflow['isAvailable']
+                        ): ?>
+                            <form
+                                class="forge-memory-extract"
+                                id="forge-memory-extract-form"
+                                method="post"
+                                action="/forge/memory/extract.php"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="<?= htmlspecialchars(
+                                        Session::csrfToken(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="work_id"
+                                    value="<?= $work->id() ?>"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="pillar"
+                                    value="<?= htmlspecialchars(
+                                        $requestedPillar,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>"
+                                >
+
+                                <p>
+                                    <?= $memoryView['exists']
+                                        ? (
+                                            'Review the latest conversation and '
+                                            . 'propose an updated understanding.'
+                                        )
+                                        : (
+                                            'When the conversation has established '
+                                            . 'enough direction, propose a structured '
+                                            . 'understanding for review.'
+                                        ) ?>
+                                </p>
+
+                                <button
+                                    class="button button--secondary"
+                                    id="forge-memory-extract-button"
+                                    type="submit"
+                                >
+                                    <?= $memoryView['exists']
+                                        ? 'Update Proposed Understanding'
+                                        : 'Propose Understanding' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+
                         <?php if ($progressView['exists']): ?>
                             <div class="forge-progress__score">
                                 <strong>
@@ -1215,14 +1298,23 @@ $workType = $work->typeLabel();
                                 <span>
                                     <?= $progressView['isReady']
                                         ? 'Ready for creator review'
-                                        : 'Story is still developing' ?>
+                                        : htmlspecialchars(
+                                            $requestedPillarEnum->label()
+                                            . ' is still developing',
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
                                 </span>
                             </div>
 
                             <div
                                 class="forge-progress__meter"
                                 role="progressbar"
-                                aria-label="Story readiness"
+                                aria-label="<?= htmlspecialchars(
+                                                $activeProgressDefinition->title(),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>"
                                 aria-valuemin="0"
                                 aria-valuemax="100"
                                 aria-valuenow="<?= (int) $progressView['readinessScore'] ?>"
@@ -1294,94 +1386,149 @@ $workType = $work->typeLabel();
     class="forge-workflow-action"
     id="forge-workflow-action"
 >
-    <?php if ($currentWorkflow['isCompleted']): ?>
-        <div class="forge-workflow-action__completed">
-            <strong>
+    <?php
+$nextPillar = null;
+
+foreach ($workflowView as $pillarKey => $workflow) {
+    if (
+        !$workflow['isLocked']
+        && !$workflow['isCompleted']
+        && $pillarKey !== $requestedPillar
+    ) {
+        $nextPillar = $pillarKey;
+        break;
+    }
+}
+
+$nextPillarWorkflow = (
+    $nextPillar !== null
+)
+    ? (
+        $workflowView[
+            $requestedPillar
+        ]
+        ?? null
+    )
+    : null;
+?>
+
+<?php if ($currentWorkflow['isCompleted']): ?>
+    <div class="forge-workflow-action__completed">
+        <strong>
+            <?= htmlspecialchars(
+                $requestedPillarEnum->label(),
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+            Complete
+        </strong>
+
+        <?php if (
+            $currentWorkflow['completedAt']
+            !== null
+        ): ?>
+            <span>
+                Completed
                 <?= htmlspecialchars(
-                    $activePillar['name'],
+                    (string) $currentWorkflow
+                        ['completedAt']
+                        ['display'],
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>
-                Complete
-            </strong>
-
-            <?php if (
-                $currentWorkflow['completedAt']
-                !== null
-            ): ?>
-                <span>
-                    Completed
-                    <?= htmlspecialchars(
-                        (string) $currentWorkflow
-                            ['completedAt']
-                            ['display'],
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>
-                </span>
-            <?php endif; ?>
-        </div>
-
-        <?php if (
-            $requestedPillar === 'story'
-            && !$workflowView['emotion']['isLocked']
-        ): ?>
-            <a
-                class="button button--primary"
-                id="forge-next-pillar-link"
-                href="/forge.php?work=<?= $work->id() ?>&pillar=emotion"
-            >
-                Continue to Emotion
-            </a>
+            </span>
         <?php endif; ?>
-    <?php elseif ($canCompletePillar): ?>
-        <form
-            class="forge-workflow-complete"
-            id="forge-workflow-complete-form"
-            method="post"
-            action="/forge/workflow/complete.php"
+    </div>
+
+   <?php if (
+    $nextPillar !== null
+    && $nextPillarWorkflow !== null
+    && !$nextPillarWorkflow['isLocked']
+): ?>
+    <?php
+    $nextPillarEnum =
+        \SonicFoundry\Work\WorkPillar::from(
+            $nextPillar
+        );
+    ?>
+
+    <a
+        class="button button--primary"
+        id="forge-next-pillar-link"
+        href="/forge.php?work=<?= $work->id() ?>&pillar=<?= htmlspecialchars(
+            $nextPillar,
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>"
+    >
+        Continue to
+        <?= htmlspecialchars(
+            $nextPillarEnum->label(),
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>
+    </a>
+<?php endif; ?>
+
+<?php elseif ($canCompletePillar): ?>
+    <form
+        class="forge-workflow-complete"
+        id="forge-workflow-complete-form"
+        method="post"
+        action="/forge/workflow/complete.php"
+    >
+        <input
+            type="hidden"
+            name="csrf_token"
+            value="<?= htmlspecialchars(
+                Session::csrfToken(),
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>"
         >
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= htmlspecialchars(
-                    Session::csrfToken(),
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>"
-            >
 
-            <input
-                type="hidden"
-                name="work_id"
-                value="<?= $work->id() ?>"
-            >
+        <input
+            type="hidden"
+            name="work_id"
+            value="<?= $work->id() ?>"
+        >
 
-            <input
-                type="hidden"
-                name="pillar"
-                value="<?= htmlspecialchars(
-                    $requestedPillar,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>"
-            >
+        <input
+            type="hidden"
+            name="pillar"
+            value="<?= htmlspecialchars(
+                $requestedPillar,
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>"
+        >
 
-            <p>
-                The Story foundation is ready. Complete it
-                when this understanding is strong enough to
-                guide the next creative stage.
-            </p>
+        <p>
+            The
+            <?= htmlspecialchars(
+                $requestedPillarEnum->label(),
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+            foundation is ready. Complete it when this
+            understanding is strong enough to guide the
+            next creative stage.
+        </p>
 
-            <button
-                class="button button--primary"
-                id="forge-workflow-complete-button"
-                type="submit"
-            >
-                Complete Story
-            </button>
-        </form>
-    <?php endif; ?>
+        <button
+            class="button button--primary"
+            id="forge-workflow-complete-button"
+            type="submit"
+        >
+            Complete
+            <?= htmlspecialchars(
+                $requestedPillarEnum->label(),
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+        </button>
+    </form>
+<?php endif; ?>
 </div>
 
 <div
@@ -1404,18 +1551,27 @@ $workType = $work->typeLabel();
                         <?php else: ?>
                             <div class="forge-progress__empty">
                                 <p>
-                                    Story readiness has not yet been evaluated.
+                                    <?= htmlspecialchars(
+                                        $requestedPillarEnum->label()
+                                        . ' readiness has not yet been evaluated.',
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
                                 </p>
 
                                 <?php if (!$memoryView['isConfirmed']): ?>
                                     <p>
-                                        Confirm the Story understanding before
-                                        evaluating its foundation.
+                                        <?php $message = sprintf(
+                                            'Confirm the %s understanding before evaluating its foundation.',
+                                            $requestedPillarEnum->label()
+                                        ); ?>
                                     </p>
                                 <?php else: ?>
                                     <p>
-                                        The confirmed Story Memory is ready
-                                        for a progress evaluation.
+                                        <?php $message = sprintf(
+                                            'The confirmed %s Memory is ready for a progress evaluation.',
+                                            $requestedPillarEnum->label()
+                                        ); ?>
                                     </p>
                                 <?php endif; ?>
                             </div>

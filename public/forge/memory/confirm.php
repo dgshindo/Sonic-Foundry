@@ -180,7 +180,8 @@ if ($pillar === '') {
 | Confirm proposed memory
 |--------------------------------------------------------------------------
 */
-
+$progress = null;
+$progressError = null;
 try {
     $memory = $container
         ->memoryService()
@@ -190,6 +191,39 @@ try {
             pillarValue: $pillar,
         );
 
+    try {
+            $evaluation = $container
+                ->pillarProgressEvaluator()
+                ->evaluate(
+                    user: $authenticatedUser,
+                    workId: $workId,
+                    pillarValue: $pillar,
+                );
+
+            $progress = $container
+                ->progressService()
+                ->recordEvaluation(
+                    user: $authenticatedUser,
+                    workId: $workId,
+                    pillarValue: $pillar,
+                    evaluation: $evaluation,
+                );
+        } catch (\Throwable $error) {
+            error_log(
+                sprintf(
+                    'Automatic progress evaluation failed for work %d, pillar %s: %s',
+                    $workId,
+                    $pillar,
+                    $error->getMessage()
+                )
+            );
+
+            $progressError = (
+                'The understanding was confirmed, but readiness '
+                . 'could not yet be evaluated.'
+            );
+        }
+
     $memoryView = $container
         ->memoryPresenter()
         ->present($memory);
@@ -198,7 +232,18 @@ try {
         'success' => true,
 
         'data' => [
-            'memory' => $memoryView,
+            'memory' => $container
+                ->memoryPresenter()
+                ->present($memory),
+
+            'progress' => $progress !== null
+                ? $container
+                    ->progressPresenter()
+                    ->present($progress)
+                : null,
+
+            'progressError' =>
+                $progressError,
         ],
 
         'error' => null,

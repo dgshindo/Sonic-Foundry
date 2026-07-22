@@ -35,6 +35,9 @@ use SonicFoundry\Pillars\Definitions\EmotionDefinition;
 use SonicFoundry\Pillars\Definitions\StoryDefinition;
 use SonicFoundry\Pillars\Registry\PillarRegistry;
 use SonicFoundry\Progress\PillarProgressEvaluator;
+use SonicFoundry\Identity\IdentityMemoryExtractor;
+use SonicFoundry\Pillars\Definitions\IdentityDefinition;
+
 final class Container
 {
     private ?PDO $database = null;
@@ -93,7 +96,7 @@ final class Container
 
     private ?PillarProgressEvaluator $pillarProgressEvaluator = null;
 
-
+    private ?IdentityMemoryExtractor $identityMemoryExtractor = null;
     
 
     /*
@@ -330,6 +333,10 @@ final class Container
 
             $registry->register(
                 new EmotionDefinition()
+            );
+
+            $registry->register(
+                new IdentityDefinition()
             );
 
             $this->pillarRegistry =
@@ -694,5 +701,24 @@ final class Container
         }
 
         return $this->emotionMemoryExtractor;
+    }
+
+    public function identityMemoryExtractor(): IdentityMemoryExtractor
+    {
+        if (
+            !$this->identityMemoryExtractor
+            instanceof IdentityMemoryExtractor
+        ) {
+            $this->identityMemoryExtractor =
+                new IdentityMemoryExtractor(
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    messages: $this->conversations(),
+                    memory: $this->memoryService(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->identityMemoryExtractor;
     }
 }

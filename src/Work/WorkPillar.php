@@ -21,4 +21,15 @@ enum WorkPillar: string
             self::Impact => 'Impact',
         };
     }
+
+    public function next(): ?self
+    {
+        return match ($this) {
+            self::Story => self::Emotion,
+            self::Emotion => self::Identity,
+            self::Identity => self::Sound,
+            self::Sound => self::Impact,
+            self::Impact => null,
+        };
+    }
 }

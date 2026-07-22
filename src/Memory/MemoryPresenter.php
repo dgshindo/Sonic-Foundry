@@ -3,203 +3,49 @@ declare(strict_types=1);
 
 namespace SonicFoundry\Memory;
 
+use SonicFoundry\Pillars\Contracts\MemoryDefinition;
+use SonicFoundry\Pillars\Registry\PillarRegistry;
+use SonicFoundry\Pillars\Support\MemoryFieldDefinition;
+use SonicFoundry\Pillars\Support\MemoryFieldType;
 use SonicFoundry\Work\WorkPillar;
 
 final class MemoryPresenter
 {
+    public function __construct(
+        private PillarRegistry $pillars,
+    ) {
+    }
+
     /**
-     * Convert pillar memory into a stable UI view model.
+     * Convert pillar memory into a stable, definition-driven
+     * presentation model.
      *
-     * During Bundle C1A, Story retains its legacy named fields while
-     * also exposing the new generic sections collection.
+     * When memory is null, the pillar argument identifies which
+     * definition supplies the empty-state fields.
      *
      * @return array<string, mixed>
      */
     public function present(
         ?PillarMemory $memory,
-        WorkPillar $pillar = WorkPillar::Story,
+        ?WorkPillar $pillar = null,
     ): array {
+        $resolvedPillar = $memory?->pillar()
+            ?? $pillar
+            ?? WorkPillar::Story;
+
+        $definition = $this->pillars
+            ->definition(
+                $resolvedPillar
+            )
+            ->memory();
+
         if ($memory === null) {
             return $this->emptyView(
-                $pillar
+                pillar: $resolvedPillar,
+                definition: $definition,
             );
         }
 
-        return match ($memory->pillar()) {
-            WorkPillar::Story =>
-                $this->presentStory(
-                    $memory
-                ),
-
-            WorkPillar::Emotion =>
-                $this->presentEmotion(
-                    $memory
-                ),
-
-            default =>
-                $this->presentGeneric(
-                    $memory
-                ),
-        };
-    }
-
-    /**
-     * Present Story memory.
-     *
-     * The named Story fields remain available for the current Forge
-     * renderer. The sections array is the new pillar-agnostic contract
-     * that Bundle C1B will consume.
-     *
-     * @return array<string, mixed>
-     */
-    private function presentStory(
-        PillarMemory $memory,
-    ): array {
-        $data = $memory->data();
-
-        $summary = $this->textField(
-            $data['summary'] ?? null,
-            'No summary has been established.'
-        );
-
-        $themes = $this->listField(
-            $data['themes'] ?? null,
-            'No themes have been established.'
-        );
-
-        $perspective = $this->textField(
-            $data['perspective'] ?? null,
-            'Perspective has not been established.'
-        );
-
-        $coreTension = $this->textField(
-            $data['core_tension'] ?? null,
-            'Core tension has not been established.'
-        );
-
-        $keySubjects = $this->listField(
-            $data['key_subjects'] ?? null,
-            'No key subjects have been established.'
-        );
-
-        $listenerTakeaway = $this->textField(
-            $data['listener_takeaway'] ?? null,
-            'Listener takeaway has not been established.'
-        );
-
-        return array_merge(
-            $this->baseView(
-                $memory
-            ),
-            [
-                /*
-                 * Legacy Story view keys.
-                 *
-                 * These remain until Bundle C1B replaces the
-                 * Story-specific Forge markup.
-                 */
-                'summary' => $summary,
-                'themes' => $themes,
-                'perspective' => $perspective,
-                'coreTension' => $coreTension,
-                'keySubjects' => $keySubjects,
-                'listenerTakeaway' =>
-                    $listenerTakeaway,
-
-                /*
-                 * New generic presentation contract.
-                 */
-                'sections' => [
-                    $this->textSection(
-                        key: 'summary',
-                        label: 'Summary',
-                        field: $summary,
-                    ),
-
-                    $this->listSection(
-                        key: 'themes',
-                        label: 'Themes',
-                        field: $themes,
-                    ),
-
-                    $this->textSection(
-                        key: 'perspective',
-                        label: 'Perspective',
-                        field: $perspective,
-                    ),
-
-                    $this->textSection(
-                        key: 'coreTension',
-                        label: 'Core Tension',
-                        field: $coreTension,
-                    ),
-
-                    $this->listSection(
-                        key: 'keySubjects',
-                        label: 'Key Subjects',
-                        field: $keySubjects,
-                    ),
-
-                    $this->textSection(
-                        key: 'listenerTakeaway',
-                        label: 'Listener Takeaway',
-                        field: $listenerTakeaway,
-                    ),
-                ],
-            ]
-        );
-    }
-
-    /**
-     * Present Emotion memory through the generic sections contract.
-     *
-     * @return array<string, mixed>
-     */
-    private function presentEmotion(
-        PillarMemory $memory,
-    ): array {
-        $data = $memory->data();
-
-        $emotionalCore = $this->textField(
-            $data['emotional_core'] ?? null,
-            'The emotional core has not been established.'
-        );
-
-        $startingEmotion = $this->textField(
-            $data['starting_emotion'] ?? null,
-            'The starting emotional state has not been established.'
-        );
-
-        $endingEmotion = $this->textField(
-            $data['ending_emotion'] ?? null,
-            'The ending emotional state has not been established.'
-        );
-
-        $emotionalArc = $this->textField(
-            $data['emotional_arc'] ?? null,
-            'The emotional arc has not been established.'
-        );
-
-        $emotionalStakes = $this->textField(
-            $data['emotional_stakes'] ?? null,
-            'The emotional stakes have not been established.'
-        );
-
-        $desiredListenerFeeling = $this->textField(
-            $data['desired_listener_feeling'] ?? null,
-            'The desired listener feeling has not been established.'
-        );
-
-        $emotionalContrasts = $this->listField(
-            $data['emotional_contrasts'] ?? null,
-            'No emotional contrasts have been established.'
-        );
-
-        $emotionalTouchstones = $this->listField(
-            $data['emotional_touchstones'] ?? null,
-            'No emotional touchstones have been established.'
-        );
-
         return array_merge(
             $this->baseView(
                 $memory
@@ -208,85 +54,16 @@ final class MemoryPresenter
                 'document' =>
                     $memory->data(),
 
-                'sections' => [
-                    $this->textSection(
-                        key: 'emotionalCore',
-                        label: 'Emotional Core',
-                        field: $emotionalCore,
+                'sections' =>
+                    $this->buildSections(
+                        definition: $definition,
+                        document: $memory->data(),
                     ),
-
-                    $this->textSection(
-                        key: 'startingEmotion',
-                        label: 'Starting Emotion',
-                        field: $startingEmotion,
-                    ),
-
-                    $this->textSection(
-                        key: 'endingEmotion',
-                        label: 'Ending Emotion',
-                        field: $endingEmotion,
-                    ),
-
-                    $this->textSection(
-                        key: 'emotionalArc',
-                        label: 'Emotional Arc',
-                        field: $emotionalArc,
-                    ),
-
-                    $this->textSection(
-                        key: 'emotionalStakes',
-                        label: 'Emotional Stakes',
-                        field: $emotionalStakes,
-                    ),
-
-                    $this->textSection(
-                        key: 'desiredListenerFeeling',
-                        label: 'Desired Listener Feeling',
-                        field: $desiredListenerFeeling,
-                    ),
-
-                    $this->listSection(
-                        key: 'emotionalContrasts',
-                        label: 'Emotional Contrasts',
-                        field: $emotionalContrasts,
-                    ),
-
-                    $this->listSection(
-                        key: 'emotionalTouchstones',
-                        label: 'Emotional Touchstones',
-                        field: $emotionalTouchstones,
-                    ),
-                ],
             ]
         );
     }
 
     /**
-     * Temporary generic representation for future pillars.
-     *
-     * Emotion-specific sections will be introduced in Bundle C1C.
-     *
-     * @return array<string, mixed>
-     */
-    private function presentGeneric(
-        PillarMemory $memory,
-    ): array {
-        return array_merge(
-            $this->baseView(
-                $memory
-            ),
-            [
-                'document' =>
-                    $memory->data(),
-
-                'sections' => [],
-            ]
-        );
-    }
-
-    /**
-     * Shared persisted-memory metadata.
-     *
      * @return array<string, mixed>
      */
     private function baseView(
@@ -376,16 +153,13 @@ final class MemoryPresenter
     }
 
     /**
-     * Return the empty presentation for a pillar.
-     *
-     * Story retains its named fields for backward compatibility.
-     *
      * @return array<string, mixed>
      */
     private function emptyView(
         WorkPillar $pillar,
+        MemoryDefinition $definition,
     ): array {
-        $base = [
+        return [
             'exists' => false,
 
             'id' => null,
@@ -432,248 +206,82 @@ final class MemoryPresenter
                 'iso' => null,
                 'display' => null,
             ],
+
+            'document' => [],
+
+            'sections' =>
+                $this->buildSections(
+                    definition: $definition,
+                    document: [],
+                ),
         ];
+    }
 
-        if ($pillar === WorkPillar::Emotion) {
-            $emotionalCore = $this->textField(
-                null,
-                'The emotional core will appear after it is discussed and proposed.'
-            );
+    /**
+     * @param array<string, mixed> $document
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function buildSections(
+        MemoryDefinition $definition,
+        array $document,
+    ): array {
+        $sections = [];
 
-            $startingEmotion = $this->textField(
-                null,
-                'The starting emotional state has not yet been established.'
-            );
-
-            $endingEmotion = $this->textField(
-                null,
-                'The ending emotional state has not yet been established.'
-            );
-
-            $emotionalArc = $this->textField(
-                null,
-                'The emotional journey has not yet been established.'
-            );
-
-            $emotionalStakes = $this->textField(
-                null,
-                'The emotional stakes have not yet been established.'
-            );
-
-            $desiredListenerFeeling = $this->textField(
-                null,
-                'The intended listener feeling has not yet been established.'
-            );
-
-            $emotionalContrasts = $this->listField(
-                [],
-                'Emotional contrasts will appear after they are identified.'
-            );
-
-            $emotionalTouchstones = $this->listField(
-                [],
-                'Emotional touchstones will appear after they are identified.'
-            );
-
-            return array_merge(
-                $base,
-                [
-                    'document' => [],
-
-                    'sections' => [
-                        $this->textSection(
-                            key: 'emotionalCore',
-                            label: 'Emotional Core',
-                            field: $emotionalCore,
-                        ),
-
-                        $this->textSection(
-                            key: 'startingEmotion',
-                            label: 'Starting Emotion',
-                            field: $startingEmotion,
-                        ),
-
-                        $this->textSection(
-                            key: 'endingEmotion',
-                            label: 'Ending Emotion',
-                            field: $endingEmotion,
-                        ),
-
-                        $this->textSection(
-                            key: 'emotionalArc',
-                            label: 'Emotional Arc',
-                            field: $emotionalArc,
-                        ),
-
-                        $this->textSection(
-                            key: 'emotionalStakes',
-                            label: 'Emotional Stakes',
-                            field: $emotionalStakes,
-                        ),
-
-                        $this->textSection(
-                            key: 'desiredListenerFeeling',
-                            label: 'Desired Listener Feeling',
-                            field: $desiredListenerFeeling,
-                        ),
-
-                        $this->listSection(
-                            key: 'emotionalContrasts',
-                            label: 'Emotional Contrasts',
-                            field: $emotionalContrasts,
-                        ),
-
-                        $this->listSection(
-                            key: 'emotionalTouchstones',
-                            label: 'Emotional Touchstones',
-                            field: $emotionalTouchstones,
-                        ),
-                    ],
-                ]
-            );
+        foreach (
+            $definition->fields()
+            as $field
+        ) {
+            $sections[] =
+                $this->buildSection(
+                    field: $field,
+                    value: $document[
+                        $field->key()
+                    ] ?? null,
+                );
         }
 
-        if ($pillar !== WorkPillar::Story) {
-            return array_merge(
-                $base,
-                [
-                    'document' => [],
-                    'sections' => [],
-                ]
-            );
-        }
-
-        $summary = $this->textField(
-            null,
-            'No Story summary has been proposed yet.'
-        );
-
-        $themes = $this->listField(
-            [],
-            'Themes will appear after they are discussed and proposed.'
-        );
-
-        $perspective = $this->textField(
-            null,
-            'The narrative perspective has not yet been established.'
-        );
-
-        $coreTension = $this->textField(
-            null,
-            'The central tension has not yet been established.'
-        );
-
-        $keySubjects = $this->listField(
-            [],
-            'Key subjects will appear after they are identified.'
-        );
-
-        $listenerTakeaway = $this->textField(
-            null,
-            'The intended listener takeaway has not yet been established.'
-        );
-
-        return array_merge(
-            $base,
-            [
-                /*
-                 * Legacy Story view keys.
-                 */
-                'summary' => $summary,
-                'themes' => $themes,
-                'perspective' => $perspective,
-                'coreTension' => $coreTension,
-                'keySubjects' => $keySubjects,
-                'listenerTakeaway' =>
-                    $listenerTakeaway,
-
-                /*
-                 * New generic sections contract.
-                 */
-                'sections' => [
-                    $this->textSection(
-                        key: 'summary',
-                        label: 'Summary',
-                        field: $summary,
-                    ),
-
-                    $this->listSection(
-                        key: 'themes',
-                        label: 'Themes',
-                        field: $themes,
-                    ),
-
-                    $this->textSection(
-                        key: 'perspective',
-                        label: 'Perspective',
-                        field: $perspective,
-                    ),
-
-                    $this->textSection(
-                        key: 'coreTension',
-                        label: 'Core Tension',
-                        field: $coreTension,
-                    ),
-
-                    $this->listSection(
-                        key: 'keySubjects',
-                        label: 'Key Subjects',
-                        field: $keySubjects,
-                    ),
-
-                    $this->textSection(
-                        key: 'listenerTakeaway',
-                        label: 'Listener Takeaway',
-                        field: $listenerTakeaway,
-                    ),
-                ],
-            ]
-        );
+        return $sections;
     }
 
     /**
-     * Create a generic text section.
-     *
-     * @param array<string, mixed> $field
-     *
      * @return array<string, mixed>
      */
-    private function textSection(
-        string $key,
-        string $label,
-        array $field,
+    private function buildSection(
+        MemoryFieldDefinition $field,
+        mixed $value,
     ): array {
         return [
-            'type' => 'text',
-            'key' => $key,
-            'label' => $label,
-            'value' => $field,
+            'type' =>
+                $field->type()->value,
+
+            'key' =>
+                $field->key(),
+
+            'label' =>
+                $field->label(),
+
+            'value' => match (
+                $field->type()
+            ) {
+                MemoryFieldType::Text =>
+                    $this->textField(
+                        value: $value,
+                        fallback:
+                            $field->emptyMessage(),
+                    ),
+
+                MemoryFieldType::List =>
+                    $this->listField(
+                        value: $value,
+                        fallback:
+                            $field->emptyMessage(),
+                    ),
+            },
         ];
     }
 
     /**
-     * Create a generic list section.
-     *
-     * @param array<string, mixed> $field
-     *
-     * @return array<string, mixed>
-     */
-    private function listSection(
-        string $key,
-        string $label,
-        array $field,
-    ): array {
-        return [
-            'type' => 'list',
-            'key' => $key,
-            'label' => $label,
-            'value' => $field,
-        ];
-    }
-
-    /**
-     * Normalize a text value for display.
-     *
      * @return array<string, mixed>
      */
     private function textField(
@@ -701,8 +309,6 @@ final class MemoryPresenter
     }
 
     /**
-     * Normalize a list value for display.
-     *
      * @return array<string, mixed>
      */
     private function listField(

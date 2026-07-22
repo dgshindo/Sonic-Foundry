@@ -123,3 +123,98 @@ Stack trace:
 #0 Command line code(1): SonicFoundry\Application\Container->memoryPresenter()
 #1 {main}
   thrown in D:\SonicFoundry\src\Application\Container.php on line 397
+[20-Jul-2026 23:29:27 UTC] PHP Fatal error:  Uncaught Error: Class "WorkPillar" not found in D:\SonicFoundry\public\dev\pillar-progress-test.php:42
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 42
+[20-Jul-2026 23:30:41 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 47
+[20-Jul-2026 23:30:41 UTC] PHP Fatal error:  Uncaught Error: Class "WorkPillar" not found in D:\SonicFoundry\public\dev\pillar-progress-test.php:52
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 52
+[20-Jul-2026 23:32:00 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 43
+[20-Jul-2026 23:32:00 UTC] PHP Fatal error:  Uncaught Error: Class "WorkPillar" not found in D:\SonicFoundry\public\dev\pillar-progress-test.php:48
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 48
+[20-Jul-2026 23:32:47 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 43
+[20-Jul-2026 23:32:47 UTC] PHP Fatal error:  Uncaught Error: Undefined constant "requestedPillar" in D:\SonicFoundry\public\dev\pillar-progress-test.php:48
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 48
+[20-Jul-2026 23:33:23 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method SonicFoundry\Pillars\Registry\PillarRegistry::get() in D:\SonicFoundry\public\dev\pillar-progress-test.php:44
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 44
+[20-Jul-2026 23:33:53 UTC] PHP Fatal error:  Uncaught TypeError: SonicFoundry\Pillars\Registry\PillarRegistry::has(): Argument #1 ($pillar) must be of type SonicFoundry\Work\WorkPillar, string given, called in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 48 and defined in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:55
+Stack trace:
+#0 D:\SonicFoundry\public\dev\pillar-progress-test.php(48): SonicFoundry\Pillars\Registry\PillarRegistry->has('story')
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 55
+[20-Jul-2026 23:34:22 UTC] PHP Fatal error:  Uncaught Error: Class "WorkPillar" not found in D:\SonicFoundry\public\dev\pillar-progress-test.php:42
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\dev\pillar-progress-test.php on line 42
+[21-Jul-2026 00:14:37 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\forge.php on line 1176
+[21-Jul-2026 00:19:33 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\forge.php on line 1176
+[21-Jul-2026 00:21:00 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\forge.php on line 1176
+[21-Jul-2026 00:26:47 UTC] PHP Fatal error:  Uncaught Error: Class "WorkPillar" not found in D:\SonicFoundry\public\forge.php:1180
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1180
+[21-Jul-2026 00:27:16 UTC] PHP Warning:  Undefined variable $activeProgressDefinition in D:\SonicFoundry\public\forge.php on line 1193
+[21-Jul-2026 00:27:16 UTC] PHP Fatal error:  Uncaught Error: Call to a member function title() on null in D:\SonicFoundry\public\forge.php:1193
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1193
+[21-Jul-2026 00:52:21 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method SonicFoundry\Work\WorkPillar::next() in D:\SonicFoundry\public\forge.php:1330
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1330
+[21-Jul-2026 01:23:04 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "identity". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[21-Jul-2026 01:23:59 UTC] PHP Warning:  Attempt to read property "value" on string in D:\SonicFoundry\public\forge.php on line 1347
+[21-Jul-2026 01:36:30 UTC] PHP Warning:  Attempt to read property "value" on string in D:\SonicFoundry\public\forge.php on line 1391
+[21-Jul-2026 01:36:30 UTC] PHP Fatal error:  Uncaught TypeError: htmlspecialchars(): Argument #1 ($string) must be of type string, null given in D:\SonicFoundry\public\forge.php:1393
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(1393): htmlspecialchars(NULL, 3, 'UTF-8')
+#1 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1393
+[21-Jul-2026 01:37:35 UTC] PHP Fatal error:  Uncaught Error: Call to a member function label() on string in D:\SonicFoundry\public\forge.php:1398
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1398
+[21-Jul-2026 01:38:23 UTC] PHP Warning:  Attempt to read property "value" on string in D:\SonicFoundry\public\forge.php on line 1391
+[21-Jul-2026 01:38:23 UTC] PHP Fatal error:  Uncaught TypeError: htmlspecialchars(): Argument #1 ($string) must be of type string, null given in D:\SonicFoundry\public\forge.php:1393
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(1393): htmlspecialchars(NULL, 3, 'UTF-8')
+#1 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1393
+[21-Jul-2026 01:57:06 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "identity". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[21-Jul-2026 13:06:08 UTC] PHP Warning:  Undefined variable $pillar in D:\SonicFoundry\public\forge.php on line 1513
+[21-Jul-2026 13:06:08 UTC] PHP Fatal error:  Uncaught Error: Call to a member function label() on null in D:\SonicFoundry\public\forge.php:1513
+Stack trace:
+#0 {main}
+  thrown in D:\SonicFoundry\public\forge.php on line 1513
+[21-Jul-2026 13:41:01 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "sound". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[21-Jul-2026 19:35:11 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "sound". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[22-Jul-2026 01:36:06 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "sound". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
