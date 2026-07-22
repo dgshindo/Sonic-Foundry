@@ -37,6 +37,8 @@ use SonicFoundry\Pillars\Registry\PillarRegistry;
 use SonicFoundry\Progress\PillarProgressEvaluator;
 use SonicFoundry\Identity\IdentityMemoryExtractor;
 use SonicFoundry\Pillars\Definitions\IdentityDefinition;
+use SonicFoundry\Sound\SoundMemoryExtractor;
+use SonicFoundry\Pillars\Definitions\SoundDefinition;
 
 final class Container
 {
@@ -97,6 +99,8 @@ final class Container
     private ?PillarProgressEvaluator $pillarProgressEvaluator = null;
 
     private ?IdentityMemoryExtractor $identityMemoryExtractor = null;
+
+    private ?SoundMemoryExtractor $soundMemoryExtractor = null;
     
 
     /*
@@ -337,6 +341,10 @@ final class Container
 
             $registry->register(
                 new IdentityDefinition()
+            );
+
+            $registry->register(
+                new SoundDefinition()
             );
 
             $this->pillarRegistry =
@@ -720,5 +728,24 @@ final class Container
         }
 
         return $this->identityMemoryExtractor;
+    }
+
+    public function soundMemoryExtractor(): SoundMemoryExtractor
+    {
+        if (
+            !$this->soundMemoryExtractor
+            instanceof SoundMemoryExtractor
+        ) {
+            $this->soundMemoryExtractor =
+                new SoundMemoryExtractor(
+                    openAI: $this->openAI(),
+                    prompts: $this->prompts(),
+                    messages: $this->conversations(),
+                    memory: $this->memoryService(),
+                    works: $this->workService(),
+                );
+        }
+
+        return $this->soundMemoryExtractor;
     }
 }

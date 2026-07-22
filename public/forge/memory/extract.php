@@ -281,6 +281,14 @@ try {
                         $workId,
                 ),
 
+        WorkPillar::Sound =>
+            $container
+                ->soundMemoryExtractor()
+                ->extract(
+                    user: $authenticatedUser,
+                    workId: $workId,
+                ),
+
         default =>
             throw new \DomainException(
                 'Memory extraction is not yet '

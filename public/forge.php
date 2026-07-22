@@ -222,6 +222,7 @@ try {
             pillarValue: $requestedPillar,
         );
 } catch (\Throwable $error) {
+    throw $error;
     exit(
         htmlspecialchars(
             $error::class
@@ -1225,8 +1226,8 @@ $workType = $work->typeLabel();
                         </div>
                         
                         <?php if (
-                            !$memoryView['isConfirmed']
-                            && $currentWorkflow['isAvailable']
+                            $currentWorkflow['isAvailable']
+                            && !$currentWorkflow['isCompleted']
                         ): ?>
                             <form
                                 class="forge-memory-extract"
@@ -1261,16 +1262,18 @@ $workType = $work->typeLabel();
                                 >
 
                                 <p>
-                                    <?= $memoryView['exists']
-                                        ? (
-                                            'Review the latest conversation and '
-                                            . 'propose an updated understanding.'
-                                        )
-                                        : (
-                                            'When the conversation has established '
-                                            . 'enough direction, propose a structured '
-                                            . 'understanding for review.'
-                                        ) ?>
+                                    <?php if (!$memoryView['exists']): ?>
+                                        When the conversation has established enough
+                                        direction, propose a structured understanding
+                                        for review.
+                                    <?php elseif ($memoryView['isConfirmed']): ?>
+                                        The current understanding is confirmed. Continue
+                                        the conversation and propose an updated
+                                        understanding when the creative direction evolves.
+                                    <?php else: ?>
+                                        Review the latest conversation and propose an
+                                        updated understanding.
+                                    <?php endif; ?>
                                 </p>
 
                                 <button
@@ -1278,9 +1281,13 @@ $workType = $work->typeLabel();
                                     id="forge-memory-extract-button"
                                     type="submit"
                                 >
-                                    <?= $memoryView['exists']
-                                        ? 'Update Proposed Understanding'
-                                        : 'Propose Understanding' ?>
+                                    <?php if (!$memoryView['exists']): ?>
+                                        Propose Understanding
+                                    <?php elseif ($memoryView['isConfirmed']): ?>
+                                        Propose Updated Understanding
+                                    <?php else: ?>
+                                        Update Proposed Understanding
+                                    <?php endif; ?>
                                 </button>
                             </form>
                         <?php endif; ?>

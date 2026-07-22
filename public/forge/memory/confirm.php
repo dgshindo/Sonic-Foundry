@@ -224,9 +224,9 @@ try {
             );
         }
 
-    $memoryView = $container
+    /*$memoryView = $container
         ->memoryPresenter()
-        ->present($memory);
+        ->present($memory);*/
 
     respondJson([
         'success' => true,
@@ -263,8 +263,12 @@ try {
     );
 } catch (\Throwable $error) {
     error_log(
-        'Story memory confirmation failed: '
-        . $error->getMessage()
+        sprintf(
+            'Creative Memory confirmation failed for work %d, pillar %s: %s',
+            $workId,
+            $pillar,
+            $error->getMessage()
+        )
     );
 
     respondJson(

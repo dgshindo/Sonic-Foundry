@@ -218,3 +218,12 @@ Stack trace:
 #0 D:\SonicFoundry\public\forge.php(249): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
 #1 {main}
   thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
+[22-Jul-2026 12:20:40 UTC] Automatic progress evaluation failed for work 2, pillar sound: Prompt file could not be found: progress/sound-evaluator.md
+[22-Jul-2026 13:49:31 UTC] Automatic progress evaluation failed for work 1, pillar sound: Unknown named parameter $pillar
+[22-Jul-2026 13:58:42 UTC] Automatic progress evaluation failed for work 1, pillar sound: Unknown named parameter $pillar
+[22-Jul-2026 14:02:54 UTC] Automatic progress evaluation failed for work 1, pillar sound: Unknown named parameter $pillar
+[22-Jul-2026 14:24:23 UTC] PHP Fatal error:  Uncaught DomainException: No definition is registered for pillar "impact". in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php:45
+Stack trace:
+#0 D:\SonicFoundry\public\forge.php(250): SonicFoundry\Pillars\Registry\PillarRegistry->definition(Object(SonicFoundry\Work\WorkPillar))
+#1 {main}
+  thrown in D:\SonicFoundry\src\Pillars\Registry\PillarRegistry.php on line 45
