@@ -41,6 +41,21 @@ use SonicFoundry\Sound\SoundMemoryExtractor;
 use SonicFoundry\Pillars\Definitions\SoundDefinition;
 use SonicFoundry\Impact\ImpactMemoryExtractor;
 use SonicFoundry\Pillars\Definitions\ImpactDefinition;
+use SonicFoundry\Artifact\CreativeArtifactRepository;
+use SonicFoundry\Artifact\CreativeArtifactService;
+
+use SonicFoundry\Style\StyleGuideGenerator;
+use SonicFoundry\Style\StyleGuideService;
+
+use SonicFoundry\Lyrics\LyricsGenerator;
+use SonicFoundry\Lyrics\LyricsService;
+
+use SonicFoundry\Style\SongStyleGenerator;
+use SonicFoundry\Style\SongStyleService;
+
+use SonicFoundry\Music\MusicStyleGenerationPromptGenerator;
+use SonicFoundry\Music\MusicStyleGenerationPromptService;
+
 
 final class Container
 {
@@ -105,6 +120,26 @@ final class Container
     private ?SoundMemoryExtractor $soundMemoryExtractor = null;
 
     private ?ImpactMemoryExtractor $impactMemoryExtractor = null;
+
+    private ?CreativeArtifactRepository $creativeArtifactRepository = null;
+
+    private ?CreativeArtifactService $creativeArtifactService = null;
+
+    private ?StyleGuideGenerator $styleGuideGenerator = null;
+
+    private ?StyleGuideService $styleGuideService = null;
+
+    private ?LyricsGenerator $lyricsGenerator = null;
+
+    private ?LyricsService $lyricsService = null;
+
+    private ?SongStyleGenerator $songStyleGenerator = null;
+
+    private ?SongStyleService $songStyleService = null;
+
+    private ?MusicStyleGenerationPromptGenerator $musicStyleGenerationPromptGenerator = null;
+
+    private ?MusicStyleGenerationPromptService $musicStyleGenerationPromptService = null;
     
 
     /*
@@ -774,5 +809,232 @@ final class Container
         }
 
         return $this->impactMemoryExtractor;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Creative Artifacts
+    |--------------------------------------------------------------------------
+    */
+
+    public function artifacts(): CreativeArtifactRepository
+    {
+        if (
+            !$this->creativeArtifactRepository
+            instanceof CreativeArtifactRepository
+        ) {
+            $this->creativeArtifactRepository =
+                new CreativeArtifactRepository(
+                    $this->database()
+                );
+        }
+
+        return $this->creativeArtifactRepository;
+    }
+
+    public function artifactService(): CreativeArtifactService
+    {
+        if (
+            !$this->creativeArtifactService
+            instanceof CreativeArtifactService
+        ) {
+            $this->creativeArtifactService =
+                new CreativeArtifactService(
+                    artifacts:
+                        $this->artifacts(),
+
+                    works:
+                        $this->workService(),
+                );
+        }
+
+        return $this->creativeArtifactService;
+    }
+
+    public function styleGuideGenerator(): StyleGuideGenerator
+    {
+        if (
+            !$this->styleGuideGenerator
+            instanceof StyleGuideGenerator
+        ) {
+            $this->styleGuideGenerator =
+                new StyleGuideGenerator(
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    memory:
+                        $this->memoryService(),
+
+                    works:
+                        $this->workService(),
+                );
+        }
+
+        return $this->styleGuideGenerator;
+    }
+
+    public function styleGuideService(): StyleGuideService
+    {
+        if (
+            !$this->styleGuideService
+            instanceof StyleGuideService
+        ) {
+            $this->styleGuideService =
+                new StyleGuideService(
+                    generator:
+                        $this->styleGuideGenerator(),
+
+                    artifacts:
+                        $this->artifactService(),
+                );
+        }
+
+        return $this->styleGuideService;
+    }
+
+    public function lyricsGenerator(): LyricsGenerator
+    {
+        if (
+            !$this->lyricsGenerator
+            instanceof LyricsGenerator
+        ) {
+            $this->lyricsGenerator =
+                new LyricsGenerator(
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    memory:
+                        $this->memoryService(),
+
+                    artifacts:
+                        $this->artifactService(),
+
+                    works:
+                        $this->workService(),
+                );
+        }
+
+        return $this->lyricsGenerator;
+    }
+
+    public function lyricsService(): LyricsService
+    {
+        if (
+            !$this->lyricsService
+            instanceof LyricsService
+        ) {
+            $this->lyricsService =
+                new LyricsService(
+                    generator:
+                        $this->lyricsGenerator(),
+
+                    artifacts:
+                        $this->artifactService(),
+                );
+        }
+
+        return $this->lyricsService;
+    }
+
+    public function songStyleGenerator(): SongStyleGenerator
+    {
+        if (
+            !$this->songStyleGenerator
+            instanceof SongStyleGenerator
+        ) {
+            $this->songStyleGenerator =
+                new SongStyleGenerator(
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    memory:
+                        $this->memoryService(),
+
+                    artifacts:
+                        $this->artifactService(),
+
+                    works:
+                        $this->workService(),
+                );
+        }
+
+        return $this->songStyleGenerator;
+    }
+
+    public function songStyleService(): SongStyleService
+    {
+        if (
+            !$this->songStyleService
+            instanceof SongStyleService
+        ) {
+            $this->songStyleService =
+                new SongStyleService(
+                    generator:
+                        $this->songStyleGenerator(),
+
+                    artifacts:
+                        $this->artifactService(),
+                );
+        }
+
+        return $this->songStyleService;
+    }
+
+    public function musicStyleGenerationPromptGenerator():
+        MusicStyleGenerationPromptGenerator
+    {
+        if (
+            !$this->musicStyleGenerationPromptGenerator
+            instanceof MusicStyleGenerationPromptGenerator
+        ) {
+            $this->musicStyleGenerationPromptGenerator =
+                new MusicStyleGenerationPromptGenerator(
+                    openAI:
+                        $this->openAI(),
+
+                    prompts:
+                        $this->prompts(),
+
+                    artifacts:
+                        $this->artifactService(),
+
+                    works:
+                        $this->workService(),
+                );
+        }
+
+        return $this
+            ->musicStyleGenerationPromptGenerator;
+    }
+
+    public function musicStyleGenerationPromptService():
+        MusicStyleGenerationPromptService
+    {
+        if (
+            !$this->musicStyleGenerationPromptService
+            instanceof MusicStyleGenerationPromptService
+        ) {
+            $this->musicStyleGenerationPromptService =
+                new MusicStyleGenerationPromptService(
+                    generator:
+                        $this
+                            ->musicStyleGenerationPromptGenerator(),
+
+                    artifacts:
+                        $this->artifactService(),
+                );
+        }
+
+        return $this
+            ->musicStyleGenerationPromptService;
     }
 }

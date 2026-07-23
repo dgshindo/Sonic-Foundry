@@ -44,6 +44,270 @@
     }
 
     /*
+|--------------------------------------------------------------------------
+| Creative artifact DOM
+|--------------------------------------------------------------------------
+*/
+
+const artifactTabs =
+    document.querySelectorAll(
+        '[data-artifact-tab]'
+    );
+
+const artifactPanels =
+    document.querySelectorAll(
+        '[data-artifact-panel]'
+    );
+
+const artifactTabStorageKey =
+    'sonic-foundry-active-artifact-tab';
+
+const songStyleGenerateForm =
+    document.getElementById(
+        'forge-song-style-generate-form'
+    );
+
+const songStyleGenerateButton =
+    document.getElementById(
+        'forge-song-style-generate-button'
+    );
+
+const songStyleFeedback =
+    document.getElementById(
+        'forge-song-style-feedback'
+    );
+
+const lyricsGenerateForm =
+    document.getElementById(
+        'forge-lyrics-generate-form'
+    );
+
+const lyricsGenerateButton =
+    document.getElementById(
+        'forge-lyrics-generate-button'
+    );
+
+const lyricsFeedback =
+    document.getElementById(
+        'forge-lyrics-feedback'
+    );
+
+/*
+|--------------------------------------------------------------------------
+| Creative artifact tabs
+|--------------------------------------------------------------------------
+*/
+
+const activateArtifactTab = (
+    selectedKey
+) => {
+    const validPanelExists =
+        Array.from(
+            artifactPanels
+        ).some(
+            (panel) =>
+                panel.dataset.artifactPanel
+                === selectedKey
+        );
+
+    const activeKey = validPanelExists
+        ? selectedKey
+        : 'style-guide';
+
+    artifactTabs.forEach((tab) => {
+        const isSelected =
+            tab.dataset.artifactTab
+            === activeKey;
+
+        tab.classList.toggle(
+            'is-active',
+            isSelected
+        );
+
+        tab.setAttribute(
+            'aria-selected',
+            isSelected
+                ? 'true'
+                : 'false'
+        );
+
+        tab.tabIndex = isSelected
+            ? 0
+            : -1;
+    });
+
+    artifactPanels.forEach((panel) => {
+        panel.hidden =
+            panel.dataset.artifactPanel
+            !== activeKey;
+    });
+};
+
+artifactTabs.forEach((tab) => {
+    tab.addEventListener(
+        'click',
+        () => {
+            const selectedKey =
+                tab.dataset.artifactTab;
+
+            if (!selectedKey) {
+                return;
+            }
+
+            window.sessionStorage.setItem(
+                artifactTabStorageKey,
+                selectedKey
+            );
+
+            activateArtifactTab(
+                selectedKey
+            );
+        }
+    );
+});
+
+const savedArtifactTab =
+    window.sessionStorage.getItem(
+        artifactTabStorageKey
+    );
+
+activateArtifactTab(
+    savedArtifactTab
+        ?? 'style-guide'
+);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Song Style generation
+    |--------------------------------------------------------------------------
+    */
+
+    const generateSongStyle = async () => {
+        if (
+            !songStyleGenerateForm
+            || !songStyleGenerateButton
+        ) {
+            return;
+        }
+
+        const originalButtonText =
+            songStyleGenerateButton.textContent;
+
+        songStyleGenerateButton.disabled = true;
+
+        songStyleGenerateButton.textContent =
+            'Forging Song Style...';
+
+        if (songStyleFeedback) {
+            songStyleFeedback.hidden = false;
+
+            songStyleFeedback.textContent =
+                'Interpreting the finished lyrics within the Producer Style Guide...';
+
+            songStyleFeedback.classList.remove(
+                'forge-song-style__feedback--error'
+            );
+        }
+
+        try {
+            const response = await fetch(
+                songStyleGenerateForm.action,
+                {
+                    method: 'POST',
+
+                    body: new FormData(
+                        songStyleGenerateForm
+                    ),
+
+                    headers: {
+                        'Accept':
+                            'application/json',
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    credentials:
+                        'same-origin',
+
+                    cache:
+                        'no-store'
+                }
+            );
+
+            const payload =
+                await readJsonResponse(
+                    response
+                );
+
+            if (response.status === 401) {
+                window.location.assign(
+                    '/login.php'
+                );
+
+                return;
+            }
+
+            if (
+                !response.ok
+                || payload.success !== true
+                || !payload.data?.artifact
+            ) {
+                throw new Error(
+                    payload.error?.message
+                    ?? (
+                        'The Song Style Addendum '
+                        + 'could not be generated.'
+                    )
+                );
+            }
+            window.sessionStorage.setItem(
+                artifactTabStorageKey,
+                'song-style'
+            );
+            window.location.reload();
+        } catch (error) {
+            if (songStyleFeedback) {
+                songStyleFeedback.textContent =
+                    error instanceof Error
+                        ? error.message
+                        : (
+                            'The Song Style Addendum '
+                            + 'could not be generated.'
+                        );
+
+                songStyleFeedback.hidden = false;
+
+                songStyleFeedback.classList.add(
+                    'forge-song-style__feedback--error'
+                );
+            }
+        } finally {
+            if (
+                songStyleGenerateButton
+                && songStyleGenerateButton.isConnected
+            ) {
+                songStyleGenerateButton.disabled =
+                    false;
+
+                songStyleGenerateButton.textContent =
+                    originalButtonText;
+            }
+        }
+    };
+
+    if (songStyleGenerateForm) {
+        songStyleGenerateForm.addEventListener(
+            'submit',
+            (event) => {
+                event.preventDefault();
+
+                void generateSongStyle();
+            }
+        );
+    }
+
+    /*
     |--------------------------------------------------------------------------
     | Creative Memory DOM
     |--------------------------------------------------------------------------
@@ -1763,4 +2027,404 @@
             'auto'
         );
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Music Style Generation Prompt
+    |--------------------------------------------------------------------------
+    */
+
+    const generateMusicPrompt = async () => {
+        if (
+            !musicPromptGenerateForm
+            || !musicPromptGenerateButton
+        ) {
+            return;
+        }
+
+        const originalButtonText =
+            musicPromptGenerateButton.textContent;
+
+        musicPromptGenerateButton.disabled = true;
+
+        musicPromptGenerateButton.textContent =
+            'Forging Music Prompt...';
+
+        if (musicPromptFeedback) {
+            musicPromptFeedback.hidden = false;
+
+            musicPromptFeedback.textContent =
+                'Compressing the approved production direction into 1,000 characters or fewer...';
+
+            musicPromptFeedback.classList.remove(
+                'forge-music-prompt__feedback--error'
+            );
+        }
+
+        try {
+            const response = await fetch(
+                musicPromptGenerateForm.action,
+                {
+                    method: 'POST',
+
+                    body: new FormData(
+                        musicPromptGenerateForm
+                    ),
+
+                    headers: {
+                        'Accept':
+                            'application/json',
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    credentials:
+                        'same-origin',
+
+                    cache:
+                        'no-store'
+                }
+            );
+
+            const payload =
+                await readJsonResponse(
+                    response
+                );
+
+            if (response.status === 401) {
+                window.location.assign(
+                    '/login.php'
+                );
+
+                return;
+            }
+
+            if (
+                !response.ok
+                || payload.success !== true
+                || !payload.data?.artifact
+            ) {
+                throw new Error(
+                    payload.error?.message
+                    ?? (
+                        'The Music Style Generation '
+                        + 'Prompt could not be generated.'
+                    )
+                );
+            }
+
+            window.sessionStorage.setItem(
+                artifactTabStorageKey,
+                'music-prompt'
+            );
+
+            window.location.reload();
+        } catch (error) {
+            if (musicPromptFeedback) {
+                musicPromptFeedback.textContent =
+                    error instanceof Error
+                        ? error.message
+                        : (
+                            'The Music Style Generation '
+                            + 'Prompt could not be generated.'
+                        );
+
+                musicPromptFeedback.hidden = false;
+
+                musicPromptFeedback.classList.add(
+                    'forge-music-prompt__feedback--error'
+                );
+            }
+        } finally {
+            if (
+                musicPromptGenerateButton
+                && musicPromptGenerateButton.isConnected
+            ) {
+                musicPromptGenerateButton.disabled =
+                    false;
+
+                musicPromptGenerateButton.textContent =
+                    originalButtonText;
+            }
+        }
+    };
+
+    if (musicPromptGenerateForm) {
+        musicPromptGenerateForm.addEventListener(
+            'submit',
+            (event) => {
+                event.preventDefault();
+
+                void generateMusicPrompt();
+            }
+        );
+    }
+
+    /*
+|--------------------------------------------------------------------------
+| Copy Music Style Generation Prompt
+|--------------------------------------------------------------------------
+*/
+
+const copyMusicPrompt = async () => {
+    if (
+        !musicPromptContent
+        || !musicPromptCopyButton
+    ) {
+        return;
+    }
+
+    const promptText =
+        musicPromptContent.textContent.trim();
+
+    if (promptText === '') {
+        return;
+    }
+
+    const originalButtonText =
+        musicPromptCopyButton.textContent;
+
+    musicPromptCopyButton.disabled = true;
+
+    try {
+        if (
+            navigator.clipboard
+            && window.isSecureContext
+        ) {
+            await navigator.clipboard.writeText(
+                promptText
+            );
+        } else {
+            const temporaryTextarea =
+                document.createElement(
+                    'textarea'
+                );
+
+            temporaryTextarea.value =
+                promptText;
+
+            temporaryTextarea.setAttribute(
+                'readonly',
+                ''
+            );
+
+            temporaryTextarea.style.position =
+                'fixed';
+
+            temporaryTextarea.style.opacity =
+                '0';
+
+            document.body.append(
+                temporaryTextarea
+            );
+
+            temporaryTextarea.select();
+
+            const copied =
+                document.execCommand(
+                    'copy'
+                );
+
+            temporaryTextarea.remove();
+
+            if (!copied) {
+                throw new Error(
+                    'The prompt could not be copied.'
+                );
+            }
+        }
+
+        musicPromptCopyButton.textContent =
+            'Copied';
+
+        if (musicPromptFeedback) {
+            musicPromptFeedback.hidden = false;
+
+            musicPromptFeedback.textContent =
+                'Music prompt copied. It is ready to paste into Suno.';
+
+            musicPromptFeedback.classList.remove(
+                'forge-music-prompt__feedback--error'
+            );
+        }
+
+        window.setTimeout(
+            () => {
+                if (
+                    musicPromptCopyButton
+                    && musicPromptCopyButton.isConnected
+                ) {
+                    musicPromptCopyButton.textContent =
+                        originalButtonText;
+                }
+            },
+            1800
+        );
+    } catch (error) {
+        musicPromptCopyButton.textContent =
+            originalButtonText;
+
+        if (musicPromptFeedback) {
+            musicPromptFeedback.hidden = false;
+
+            musicPromptFeedback.textContent =
+                error instanceof Error
+                    ? error.message
+                    : (
+                        'The prompt could not '
+                        + 'be copied.'
+                    );
+
+            musicPromptFeedback.classList.add(
+                'forge-music-prompt__feedback--error'
+            );
+        }
+    } finally {
+        if (
+            musicPromptCopyButton
+            && musicPromptCopyButton.isConnected
+        ) {
+            musicPromptCopyButton.disabled =
+                false;
+        }
+    }
+};
+
+if (musicPromptCopyButton) {
+    musicPromptCopyButton.addEventListener(
+        'click',
+        () => {
+            void copyMusicPrompt();
+        }
+    );
+}
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lyrics generation
+    |--------------------------------------------------------------------------
+    */
+
+    const generateLyrics = async () => {
+        if (
+            !lyricsGenerateForm
+            || !lyricsGenerateButton
+        ) {
+            return;
+        }
+
+        const originalButtonText =
+            lyricsGenerateButton.textContent;
+
+        lyricsGenerateButton.disabled = true;
+
+        lyricsGenerateButton.textContent =
+            'Forging Lyrics...';
+
+        if (lyricsFeedback) {
+            lyricsFeedback.hidden = false;
+
+            lyricsFeedback.textContent =
+                'Transforming the confirmed creative foundation into finished lyrics...';
+
+            lyricsFeedback.classList.remove(
+                'forge-lyrics__feedback--error'
+            );
+        }
+
+        try {
+            const response = await fetch(
+                lyricsGenerateForm.action,
+                {
+                    method: 'POST',
+
+                    body: new FormData(
+                        lyricsGenerateForm
+                    ),
+
+                    headers: {
+                        'Accept':
+                            'application/json',
+
+                        'X-Requested-With':
+                            'XMLHttpRequest'
+                    },
+
+                    credentials:
+                        'same-origin',
+
+                    cache:
+                        'no-store'
+                }
+            );
+
+            const payload =
+                await readJsonResponse(
+                    response
+                );
+
+            if (response.status === 401) {
+                window.location.assign(
+                    '/login.php'
+                );
+
+                return;
+            }
+
+            if (
+                !response.ok
+                || payload.success !== true
+                || !payload.data?.artifact
+            ) {
+                throw new Error(
+                    payload.error?.message
+                    ?? 'The lyrics could not be generated.'
+                );
+            }
+
+            window.sessionStorage.setItem(
+                artifactTabStorageKey,
+                'lyrics'
+            );
+
+            window.location.reload();
+        } catch (error) {
+            if (lyricsFeedback) {
+                lyricsFeedback.textContent =
+                    error instanceof Error
+                        ? error.message
+                        : 'The lyrics could not be generated.';
+
+                lyricsFeedback.hidden = false;
+
+                lyricsFeedback.classList.add(
+                    'forge-lyrics__feedback--error'
+                );
+            }
+        } finally {
+            if (
+                lyricsGenerateButton
+                && lyricsGenerateButton.isConnected
+            ) {
+                lyricsGenerateButton.disabled = false;
+
+                lyricsGenerateButton.textContent =
+                    originalButtonText;
+            }
+        }
+    };
+
+    if (lyricsGenerateForm) {
+        lyricsGenerateForm.addEventListener(
+            'submit',
+            (event) => {
+                event.preventDefault();
+
+                void generateLyrics();
+            }
+        );
+    }
+
+
 })();

@@ -169,6 +169,8 @@ try {
     );
 }
 
+
+
 /*
 |--------------------------------------------------------------------------
 | Requested pillar
@@ -297,6 +299,107 @@ $canCompletePillar = (
     && $progressView['isReady']
     && $currentWorkflow['isAvailable']
 );
+
+/*
+|--------------------------------------------------------------------------
+| Load generated Style Guide
+|--------------------------------------------------------------------------
+*/
+$impactIsCompleted = (
+    $workflowView['impact']['isCompleted']
+    ?? false
+) === true;
+$styleGuide = null;
+
+if (
+    (
+        $workflowView['impact']['isCompleted']
+        ?? false
+    ) === true
+) {
+    try {
+        $styleGuide = $container
+            ->styleGuideService()
+            ->styleGuideForWork(
+                user: $authenticatedUser,
+                workId: $work->id(),
+            );
+    } catch (\DomainException $error) {
+        Session::flash(
+            'work_error',
+            $error->getMessage()
+        );
+
+        header('Location: /workspace.php');
+        exit;
+    }
+}
+
+$lyrics = null;
+
+if ($styleGuide !== null) {
+    try {
+        $lyrics = $container
+            ->lyricsService()
+            ->lyricsForWork(
+                user: $authenticatedUser,
+                workId: $work->id(),
+            );
+    } catch (\DomainException $error) {
+        Session::flash(
+            'work_error',
+            $error->getMessage()
+        );
+
+        header('Location: /workspace.php');
+        exit;
+    }
+}
+
+$songStyle = null;
+
+if (
+    $styleGuide !== null
+    && $lyrics !== null
+) {
+    try {
+        $songStyle = $container
+            ->songStyleService()
+            ->songStyleForWork(
+                user: $authenticatedUser,
+                workId: $work->id(),
+            );
+    } catch (\DomainException $error) {
+        Session::flash(
+            'work_error',
+            $error->getMessage()
+        );
+
+        header('Location: /workspace.php');
+        exit;
+    }
+}
+
+$musicPrompt = null;
+
+if ($songStyle !== null) {
+    try {
+        $musicPrompt = $container
+            ->musicStyleGenerationPromptService()
+            ->promptForWork(
+                user: $authenticatedUser,
+                workId: $work->id(),
+            );
+    } catch (\DomainException $error) {
+        Session::flash(
+            'work_error',
+            $error->getMessage()
+        );
+
+        header('Location: /workspace.php');
+        exit;
+    }
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -752,12 +855,12 @@ $workType = $work->typeLabel();
 
             <!-- Conversation -->
 
-            <main class="forge-conversation">
+            <main class="forge-conversation" style="overflow-y: auto; overflow-x: hidden;">
                 <section
                     class="forge-message-history"
                     id="forge-message-history"
                     aria-label="Creative Partner conversation"
-                    aria-live="polite"
+                    aria-live="polite"  <?= $impactIsCompleted ? 'hidden' : '' ?>
                 >
                     <div
                         class="form-alert form-alert--error"
@@ -886,6 +989,7 @@ $workType = $work->typeLabel();
                     id="forge-composer"
                     method="post"
                     action="/forge/message.php"
+                    <?= $impactIsCompleted ? 'hidden' : '' ?>
                 >
                     <input
                         type="hidden"
@@ -945,11 +1049,748 @@ $workType = $work->typeLabel();
                         >
                             Send
                         </button>
-                    </footer>
+                                        </footer>
                 </form>
+
+                <?php if ($impactIsCompleted): ?>
+                    <div class="forge-artifacts">
+                        <nav
+                            class="forge-artifact-tabs"
+                            aria-label="Creative artifact tools"
+                        >
+                            <button
+                                class="forge-artifact-tab is-active"
+                                type="button"
+                                data-artifact-tab="style-guide"
+                                aria-controls="forge-artifact-style-guide"
+                                aria-selected="true"
+                            >
+                                Style Guide
+                            </button>
+
+                            <button
+                                class="forge-artifact-tab"
+                                type="button"
+                                data-artifact-tab="lyrics"
+                                aria-controls="forge-artifact-lyrics"
+                                aria-selected="false"
+                            >
+                                Lyric Generator
+                            </button>
+
+                            <button
+                                class="forge-artifact-tab"
+                                type="button"
+                                data-artifact-tab="song-style"
+                                aria-controls="forge-artifact-song-style"
+                                aria-selected="false"
+                            >
+                                Style Generator
+                            </button>
+
+                            <button
+                                class="forge-artifact-tab"
+                                type="button"
+                                data-artifact-tab="music-prompt"
+                                aria-controls="forge-artifact-music-prompt"
+                                aria-selected="false"
+                            >
+                                Music Prompt
+                            </button>
+                        </nav>
+                    
+                    <section
+                        class="forge-artifact-panel"
+                        id="forge-artifact-style-guide"
+                        data-artifact-panel="style-guide"
+                        style="padding: 15px;"
+                    >
+                        <header class="forge-style-guide__header">
+                            <div>
+                                <p class="eyebrow">
+                                    Creative Synthesis
+                                </p>
+
+                                <h3 id="forge-style-guide-title">
+                                    Style Guide
+                                </h3>
+                            </div>
+
+                            <?php if ($styleGuide !== null): ?>
+                                <span class="forge-style-guide__revision">
+                                    Revision
+                                    <?= $styleGuide->revision() ?>
+                                </span>
+                            <?php endif; ?>
+                        </header>
+
+                        <div
+                            class="forge-style-guide__feedback"
+                            id="forge-style-guide-feedback"
+                            role="status"
+                            aria-live="polite"
+                            hidden
+                        ></div>
+
+                        <?php if ($styleGuide === null): ?>
+                            <div class="forge-style-guide__empty">
+                                <p>
+                                   The creative foundation is complete.
+                                </p>
+                                <p>
+                                    Sonic Foundry will now synthesize the confirmed Story, Emotion, Identity, Sound, and Impact into a cohesive production document describing the musical identity of this Work.
+                                </p>
+                                <p>
+                                    This document becomes the creative blueprint for production, songwriting, and lyric generation.
+                                </p>
+
+                                <form
+                                    class="forge-style-guide__form"
+                                    id="forge-style-guide-generate-form"
+                                    method="post"
+                                    action="/forge/style/generate.php"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars(
+                                            Session::csrfToken(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="work_id"
+                                        value="<?= $work->id() ?>"
+                                    >
+
+                                    <button
+                                        class="button button--primary"
+                                        id="forge-style-guide-generate-button"
+                                        type="submit"
+                                    >
+                                        Generate Style Guide
+                                    </button>
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <article class="forge-style-guide__document">
+                                <h3>
+                                    <?= htmlspecialchars(
+                                        $styleGuide->title(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </h3>
+
+                                <div class="forge-style-guide__content">
+                                    <?= nl2br(
+                                        htmlspecialchars(
+                                            $styleGuide->content(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        )
+                                    ) ?>
+                                </div>
+                            </article>
+
+                            <footer class="forge-style-guide__meta">
+                                <span>
+                                    Updated
+                                    <?= htmlspecialchars(
+                                        $styleGuide
+                                            ->updatedAt()
+                                            ->format(
+                                                'M j, Y \a\t g:i A'
+                                            ),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </span>
+
+                                <form
+                                    class="forge-style-guide__form"
+                                    id="forge-style-guide-generate-form"
+                                    method="post"
+                                    action="/forge/style/generate.php"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars(
+                                            Session::csrfToken(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="work_id"
+                                        value="<?= $work->id() ?>"
+                                    >
+
+                                    <button
+                                        class="button button--secondary"
+                                        id="forge-style-guide-generate-button"
+                                        type="submit"
+                                    >
+                                        Regenerate Style Guide
+                                    </button>
+                                </form>
+                            </footer>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
+
+                <?php if ($styleGuide !== null): ?>
+                    <section
+                        class="forge-artifact-panel"
+                        id="forge-artifact-lyrics"
+                        data-artifact-panel="lyrics"
+                        hidden
+                    >
+                        <header class="forge-lyrics__header">
+                            <div>
+                                <p class="eyebrow">
+                                    Creative Synthesis
+                                </p>
+
+                                <h2>
+                                    Lyrics
+                                </h2>
+                            </div>
+
+                            <?php if ($lyrics !== null): ?>
+                                <span class="forge-lyrics__revision">
+                                    Revision
+                                    <?= $lyrics->revision() ?>
+                                </span>
+                            <?php endif; ?>
+                        </header>
+
+                        <div
+                            class="forge-lyrics__feedback"
+                            id="forge-lyrics-feedback"
+                            role="status"
+                            aria-live="polite"
+                            hidden
+                        ></div>
+
+                        <?php if ($lyrics === null): ?>
+                            <div class="forge-lyrics__empty">
+                                <p>
+                                    The Producer Style Guide is complete.
+                                    Sonic Foundry can now forge finished,
+                                    performable lyrics from the confirmed
+                                    creative foundation.
+                                </p>
+
+                                <form
+                                    class="forge-lyrics__form"
+                                    id="forge-lyrics-generate-form"
+                                    method="post"
+                                    action="/forge/lyrics/generate.php"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars(
+                                            Session::csrfToken(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="work_id"
+                                        value="<?= $work->id() ?>"
+                                    >
+
+                                    <button
+                                        class="button button--primary"
+                                        id="forge-lyrics-generate-button"
+                                        type="submit"
+                                    >
+                                        Generate Lyrics
+                                    </button>
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <article class="forge-lyrics__document">
+                                <h3>
+                                    <?= htmlspecialchars(
+                                        $lyrics->title(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </h3>
+
+                                <div class="forge-lyrics__content">
+                                    <?= nl2br(
+                                        htmlspecialchars(
+                                            $lyrics->content(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        )
+                                    ) ?>
+                                </div>
+                            </article>
+
+                            <footer class="forge-lyrics__meta">
+                                <span>
+                                    Updated
+                                    <?= htmlspecialchars(
+                                        $lyrics
+                                            ->updatedAt()
+                                            ->format(
+                                                'M j, Y \a\t g:i A'
+                                            ),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </span>
+
+                                <form
+                                    class="forge-lyrics__form"
+                                    id="forge-lyrics-generate-form"
+                                    method="post"
+                                    action="/forge/lyrics/generate.php"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars(
+                                            Session::csrfToken(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="work_id"
+                                        value="<?= $work->id() ?>"
+                                    >
+
+                                    <button
+                                        class="button button--secondary"
+                                        id="forge-lyrics-generate-button"
+                                        type="submit"
+                                    >
+                                        Regenerate Lyrics
+                                    </button>
+                                </form>
+                            </footer>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
+                <section
+                    class="forge-artifact-panel"
+                    id="forge-artifact-song-style"
+                    data-artifact-panel="song-style"
+                    hidden
+                >
+                    <header class="forge-song-style__header">
+                        <div>
+                            <p class="eyebrow">
+                                Creative Synthesis
+                            </p>
+
+                            <h2>
+                                Style Generator
+                            </h2>
+                        </div>
+
+                        <?php if ($songStyle !== null): ?>
+                            <span class="forge-song-style__revision">
+                                Revision
+                                <?= $songStyle->revision() ?>
+                            </span>
+                        <?php endif; ?>
+                    </header>
+
+                    <div
+                        class="forge-song-style__feedback"
+                        id="forge-song-style-feedback"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+                    <?php if ($lyrics === null): ?>
+                        <div class="forge-song-style__empty">
+                            <p>
+                                Finished lyrics are required before the
+                                song-specific Style Addendum can be forged.
+                            </p>
+                        </div>
+
+                    <?php elseif ($songStyle === null): ?>
+                        <div class="forge-song-style__empty">
+                            <p>
+                                The Producer Style Guide and finished lyrics
+                                are ready. Sonic Foundry can now define how
+                                this particular song should uniquely express
+                                the established creative direction.
+                            </p>
+
+                            <form
+                                class="forge-song-style__form"
+                                id="forge-song-style-generate-form"
+                                method="post"
+                                action="/forge/style/song-generate.php"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="<?= htmlspecialchars(
+                                        Session::csrfToken(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="work_id"
+                                    value="<?= $work->id() ?>"
+                                >
+
+                                <button
+                                    class="button button--primary"
+                                    id="forge-song-style-generate-button"
+                                    type="submit"
+                                >
+                                    Generate Song Style
+                                </button>
+                            </form>
+                        </div>
+
+                    <?php else: ?>
+                        <article class="forge-song-style__document">
+                            <h3>
+                                <?= htmlspecialchars(
+                                    $songStyle->title(),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </h3>
+
+                            <div class="forge-song-style__content">
+                                <?= nl2br(
+                                    htmlspecialchars(
+                                        $songStyle->content(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    )
+                                ) ?>
+                            </div>
+                        </article>
+
+                        <footer class="forge-song-style__meta">
+                            <span>
+                                Updated
+                                <?= htmlspecialchars(
+                                    $songStyle
+                                        ->updatedAt()
+                                        ->format(
+                                            'M j, Y \a\t g:i A'
+                                        ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                            <form
+                                class="forge-song-style__form"
+                                id="forge-song-style-generate-form"
+                                method="post"
+                                action="/forge/style/song-generate.php"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="<?= htmlspecialchars(
+                                        Session::csrfToken(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="work_id"
+                                    value="<?= $work->id() ?>"
+                                >
+
+                                <button
+                                    class="button button--secondary"
+                                    id="forge-song-style-generate-button"
+                                    type="submit"
+                                >
+                                    Regenerate Song Style
+                                </button>
+                            </form>
+                        </footer>
+                    <?php endif; ?>
+                </section>
+                <section
+                    class="forge-artifact-panel"
+                    id="forge-artifact-music-prompt"
+                    data-artifact-panel="music-prompt"
+                    hidden
+                >
+                    <header class="forge-music-prompt__header">
+                        <div>
+                            <p class="eyebrow">
+                                Creative Synthesis
+                            </p>
+
+                            <h2>
+                                Music Style Generation Prompt
+                            </h2>
+                        </div>
+
+                        <?php if ($musicPrompt !== null): ?>
+                            <span class="forge-music-prompt__revision">
+                                Revision
+                                <?= $musicPrompt->revision() ?>
+                            </span>
+                        <?php endif; ?>
+                    </header>
+
+                    <div
+                        class="forge-music-prompt__feedback"
+                        id="forge-music-prompt-feedback"
+                        role="status"
+                        aria-live="polite"
+                        hidden
+                    ></div>
+
+                    <?php if ($songStyle === null): ?>
+
+                        <div class="forge-music-prompt__empty">
+
+                            <p>
+                                A completed Song Style Addendum is required
+                                before Sonic Foundry can generate the
+                                Music Style Generation Prompt.
+                            </p>
+
+                        </div>
+
+                    <?php elseif ($musicPrompt === null): ?>
+
+                        <div class="forge-music-prompt__empty">
+
+                            <p>
+                                Compress the approved Producer Style Guide
+                                and Song Style Addendum into a concise,
+                                AI-ready prompt for music generation.
+                            </p>
+
+                            <form
+                                class="forge-music-prompt__form"
+                                id="forge-music-prompt-generate-form"
+                                method="post"
+                                action="/forge/music/generate.php"
+                            >
+                                <input
+                                    type="hidden"
+                                    name="csrf_token"
+                                    value="<?= htmlspecialchars(
+                                        Session::csrfToken(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="work_id"
+                                    value="<?= $work->id() ?>"
+                                >
+
+                                <button
+                                    class="button button--primary"
+                                    id="forge-music-prompt-generate-button"
+                                    type="submit"
+                                >
+                                    Generate Music Prompt
+                                </button>
+                            </form>
+
+                        </div>
+
+                    <?php else: ?>
+
+                        <article class="forge-music-prompt__document">
+
+                            <h3>
+                                <?= htmlspecialchars(
+                                    $musicPrompt->title(),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </h3>
+
+                            <p
+                                class="forge-music-prompt__character-count"
+                            >
+                                <?= mb_strlen(
+                                    $musicPrompt->content(),
+                                    'UTF-8'
+                                ) ?>
+                                / 1000 characters
+                            </p>
+
+                            <div
+                                class="forge-music-prompt__content"
+                                id="forge-music-prompt-content"
+                            >
+                                <?= nl2br(
+                                    htmlspecialchars(
+                                        $musicPrompt->content(),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    )
+                                ) ?>
+                            </div>
+
+                        </article>
+
+                        <footer class="forge-music-prompt__meta">
+
+                            <span>
+                                Updated
+                                <?= htmlspecialchars(
+                                    $musicPrompt
+                                        ->updatedAt()
+                                        ->format(
+                                            'M j, Y \a\t g:i A'
+                                        ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </span>
+
+                            <div
+                                class="forge-music-prompt__actions"
+                            >
+
+                                <button
+                                    type="button"
+                                    class="button button--secondary"
+                                    id="forge-music-prompt-copy-button"
+                                >
+                                    Copy Prompt
+                                </button>
+
+                                <form
+                                    class="forge-music-prompt__form"
+                                    id="forge-music-prompt-generate-form"
+                                    method="post"
+                                    action="/forge/music/generate.php"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="csrf_token"
+                                        value="<?= htmlspecialchars(
+                                            Session::csrfToken(),
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
+
+                                    <input
+                                        type="hidden"
+                                        name="work_id"
+                                        value="<?= $work->id() ?>"
+                                    >
+
+                                    <button
+                                        class="button button--secondary"
+                                        id="forge-music-prompt-generate-button"
+                                        type="submit"
+                                    >
+                                        Regenerate Prompt
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </footer>
+
+                    <?php endif; ?>
+
+                </section>
+                        </div>
+                <script>
+                    const lyricsGenerateForm =
+                        document.getElementById(
+                            'forge-lyrics-generate-form'
+                        );
+
+                    const lyricsGenerateButton =
+                        document.getElementById(
+                            'forge-lyrics-generate-button'
+                        );
+
+                    const lyricsFeedback =
+                        document.getElementById(
+                            'forge-lyrics-feedback'
+                        );
+
+                    const songStyleGenerateForm =
+                        document.getElementById(
+                            'forge-song-style-generate-form'
+                        );
+
+                    const songStyleGenerateButton =
+                        document.getElementById(
+                            'forge-song-style-generate-button'
+                        );
+
+                    const songStyleFeedback =
+                        document.getElementById(
+                            'forge-song-style-feedback'
+                        );
+
+                    const musicPromptGenerateForm =
+                        document.getElementById(
+                            'forge-music-prompt-generate-form'
+                        );
+
+                    const musicPromptGenerateButton =
+                        document.getElementById(
+                            'forge-music-prompt-generate-button'
+                        );
+
+                    const musicPromptFeedback =
+                        document.getElementById(
+                            'forge-music-prompt-feedback'
+                        );
+
+                    const musicPromptContent =
+                        document.getElementById(
+                            'forge-music-prompt-content'
+                        );
+
+                    const musicPromptCopyButton =
+                        document.getElementById(
+                            'forge-music-prompt-copy-button'
+                        );
+                </script>
+
             </main>
 
             <!-- Creative Memory -->
+
 
             <aside
                 class="forge-memory"
